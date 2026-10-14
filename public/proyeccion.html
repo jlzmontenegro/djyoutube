@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DJ YouTube · Proyección</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📺</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap">
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: #fff;
-      font-family: system-ui, "Segoe UI", Roboto, sans-serif; }
+      font-family: "Manrope", system-ui, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
     body.idle { cursor: none; }
     .layer { position: fixed; inset: 0; opacity: 0; transition: opacity .2s linear; }
     .layer iframe { width: 100%; height: 100%; border: 0; pointer-events: none; }
@@ -16,7 +19,7 @@
     #overlayText { position: fixed; top: 3vh; right: 3vw; z-index: 5; font-weight: 800;
       font-size: clamp(18px, 3.2vw, 60px); letter-spacing: .02em; text-shadow: 0 2px 14px rgba(0,0,0,.85); }
     #nowPlaying { position: fixed; left: 3vw; bottom: 6vh; z-index: 5; max-width: 70vw; padding: 1.2vh 1.6vw;
-      background: rgba(0,0,0,.55); border-left: 5px solid #a78bfa; border-radius: 6px; backdrop-filter: blur(6px);
+      background: rgba(0,0,0,.55); border-left: 4px solid #f4f4f5; border-radius: 6px; backdrop-filter: blur(6px);
       opacity: 0; transform: translateY(14px); transition: opacity .6s, transform .6s; }
     #nowPlaying.show { opacity: 1; transform: none; }
     #npTitle { font-size: clamp(16px, 2.3vw, 44px); font-weight: 700; }
@@ -26,13 +29,13 @@
       transition: opacity .4s; }
     body.idle #hint { opacity: 0; }
     .card { pointer-events: auto; max-width: 560px; margin: 16px; padding: 24px 28px; border-radius: 14px; text-align: center;
-      background: rgba(18,22,31,.92); border: 1px solid #262c3b; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+      background: rgba(20,21,24,.94); border: 1px solid #2a2d33; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
     .card h1 { margin: 0 0 8px; font-size: 22px; }
     .card p { margin: 8px 0; color: #c7ccd8; line-height: 1.45; }
     .card button { margin-top: 8px; font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: 0;
-      background: #a78bfa; color: #12091f; cursor: pointer; }
-    #status { font-size: 13px; color: #fbbf24; }
-    #status.on { color: #34d399; }
+      background: #f4f4f5; color: #111214; cursor: pointer; }
+    #status { font-size: 13px; color: #7d818a; }
+    #status.on { color: #ececee; }
   </style>
 </head>
 <body>
@@ -42,10 +45,10 @@
   <div id="nowPlaying"><div id="npTitle"></div><div id="npAuthor"></div></div>
   <div id="hint">
     <div class="card">
-      <h1>📺 Pantalla de proyección</h1>
+      <h1>Pantalla de proyección</h1>
       <p>Arrastra esta ventana a la pantalla o proyector y haz <b>doble clic</b> (o pulsa <b>F</b>) para verla en pantalla completa.</p>
       <p>Para una videollamada u OBS, comparte <b>esta ventana</b>. El sonido sale de la consola de DJ.</p>
-      <button id="btnFull">⛶ Pantalla completa</button>
+      <button id="btnFull">Pantalla completa</button>
       <p id="status">Esperando la consola de DJ…</p>
     </div>
   </div>

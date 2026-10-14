@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DJ YouTube</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
   <div id="fileWarning" class="banner hidden">
@@ -14,12 +17,15 @@
   </div>
 
   <header class="topbar">
-    <div class="brand"><span class="logo">🎧</span> DJ <b>YouTube</b></div>
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="16" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".4"/><circle cx="16" cy="16" r="3" fill="currentColor"/></svg>
+      <span>DJ <b>YouTube</b></span>
+    </div>
     <div class="top-actions">
       <span id="projStatus" class="pill">Proyección cerrada</span>
-      <button id="btnProjector" class="btn accent">📺 Abrir proyección</button>
-      <button id="btnHelp" class="btn ghost" title="Atajos de teclado y ayuda">⌨ Ayuda</button>
-      <button id="btnSettings" class="btn ghost">⚙ Ajustes</button>
+      <button id="btnProjector" class="btn accent">Abrir proyección</button>
+      <button id="btnHelp" class="btn ghost" title="Atajos de teclado y ayuda">Ayuda</button>
+      <button id="btnSettings" class="btn ghost">Ajustes</button>
     </div>
   </header>
 
@@ -85,7 +91,7 @@
       <div class="vmix" title="Lo que se ve ahora en la proyección">
         <span>A</span><div class="vmix-bar"><div id="vmixFill"></div></div><span>B</span>
       </div>
-      <button id="btnBlackout" class="btn wide" title="Tecla N">⬛ Pantalla negra</button>
+      <button id="btnBlackout" class="btn wide" title="Tecla N">Pantalla negra</button>
       <input id="overlayText" class="input" maxlength="60" placeholder="Texto en pantalla (ej. DJ Jose)">
       <label class="check"><input type="checkbox" id="showTitle"> Mostrar nombre de la canción</label>
     </section>
@@ -239,7 +245,7 @@
         </div>
       </div>
       <h4>Proyectar el video</h4>
-      <p>Pulsa <b>📺 Abrir proyección</b>. Si tienes un segundo monitor o proyector conectado (modo «Extender»),
+      <p>Pulsa <b>Abrir proyección</b>. Si tienes un segundo monitor o proyector conectado (modo «Extender»),
          la ventana se abre allí; si no, arrástrala a esa pantalla y haz doble clic para pantalla completa.
          Para videollamadas u OBS comparte esa ventana. Deja esta consola abierta: el sonido sale de aquí.</p>
       <div class="dlg-actions"><span class="spacer"></span><button class="btn accent">Entendido</button></div>
@@ -248,7 +254,7 @@
 
   <div id="toasts"></div>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=3"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

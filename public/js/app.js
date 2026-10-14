@@ -821,7 +821,7 @@ function updateProjStatus() {
 function toggleBlackout() {
   mixer.blackout = !mixer.blackout;
   $('#btnBlackout').classList.toggle('on', mixer.blackout);
-  $('#btnBlackout').textContent = mixer.blackout ? '⬛ Pantalla negra (activa)' : '⬛ Pantalla negra';
+  $('#btnBlackout').textContent = mixer.blackout ? 'Pantalla negra (activa)' : 'Pantalla negra';
   publish();
 }
 
@@ -1085,7 +1085,7 @@ function renderResults() {
   if (loading) body = '<p class="msg muted">Buscando…</p>';
   else if (error === 'nokey') {
     body = `<p class="msg">Para buscar dentro de la app necesitas una clave gratuita de la API de YouTube
-      (botón <b>⚙ Ajustes</b>). Mientras tanto, pulsa <b>Abrir YouTube ↗</b>, busca la canción,
+      (botón <b>Ajustes</b>). Mientras tanto, pulsa <b>Abrir YouTube ↗</b>, busca la canción,
       copia el enlace y pégalo aquí.</p>`;
   } else if (error) body = `<p class="msg" style="color:var(--bad)">Error al buscar: ${esc(error)}</p>`;
   else if (!items.length) body = '<p class="msg muted">Sin resultados.</p>';
