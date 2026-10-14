@@ -3,7 +3,7 @@
    Muestra en silencio los mismos videos que las bandejas de la consola y los mantiene sincronizados. */
 
 // Debe coincidir con APP_VERSION de app.js: así la consola detecta una proyección desactualizada.
-const APP_VERSION = '10';
+const APP_VERSION = '11';
 const PS = { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3 };
 const channel = new BroadcastChannel('djyoutube');
 const layers = { A: document.getElementById('layerA'), B: document.getElementById('layerB') };

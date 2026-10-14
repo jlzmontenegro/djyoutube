@@ -7,7 +7,7 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 // Debe coincidir con APP_VERSION de proyeccion.js: así la consola detecta una proyección desactualizada.
-const APP_VERSION = '10';
+const APP_VERSION = '11';
 const PS = { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 };
 const DRAG_TRACK = 'application/x-djyt-track';
 const DRAG_INDEX = 'application/x-djyt-index';
@@ -1261,6 +1261,17 @@ function drawMeters(now) {
   let ampA, ampB, ampM;
   if (realMeter) {
     ampM = realAmplitude();
+    // Si suena música pero la captura está en silencio, se compartió la pestaña equivocada
+    // (p. ej. la proyección, que está muda)
+    if (Math.max(dA, dB) > 0.1 && ampM < 0.002) {
+      realMeter.silentSince ??= now;
+      if (now - realMeter.silentSince > 5000 && !realMeter.warned) {
+        realMeter.warned = true;
+        toast('El medidor real no recibe sonido: probablemente compartiste la ventana de proyección (que está en silencio). Apágalo y vuelve a activarlo eligiendo la pestaña de la consola de DJ.', 'error');
+      }
+    } else {
+      realMeter.silentSince = null;
+    }
     const total = dA * dA + dB * dB;
     ampA = total ? ampM * Math.sqrt(dA * dA / total) : 0;
     ampB = total ? ampM * Math.sqrt(dB * dB / total) : 0;
@@ -1287,7 +1298,7 @@ async function toggleRealMeter() {
     toast('Este navegador no permite medir el audio. Usa Chrome o Edge.', 'error');
     return;
   }
-  toast('Elige «Esta pestaña» y deja activado «Compartir también el audio de la pestaña».');
+  toast('Elige la pestaña de la CONSOLA de DJ (no la proyección) y deja activado «Compartir también el audio». El navegador mostrará una barra de «compartiendo» mientras esté activo.');
   let stream;
   try {
     stream = await navigator.mediaDevices.getDisplayMedia({
