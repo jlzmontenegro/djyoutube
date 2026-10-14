@@ -186,7 +186,7 @@ function hintDisabled() {
   try { return localStorage.getItem(HINT_KEY) === '1'; } catch { return false; }
 }
 function closeHint() {
-  if (!hintOpen) return;
+  if (hint.hidden) return;
   hintOpen = false;
   clearTimeout(hintTimer);
   hint.classList.add('closing');

@@ -12,6 +12,7 @@
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: #fff;
       font-family: "Manrope", system-ui, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
     body.idle { cursor: none; }
+    [hidden] { display: none !important; }
     .layer { position: fixed; inset: 0; opacity: 0; transition: opacity .5s linear; }
     .layer iframe { width: 100%; height: 100%; border: 0; pointer-events: none; }
     #layerA { z-index: 1; }
@@ -61,7 +62,7 @@
       <p id="status">Esperando la consola de DJ…</p>
     </div>
   </div>
-  <script src="js/proyeccion.js?v=8"></script>
+  <script src="js/proyeccion.js?v=9"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
