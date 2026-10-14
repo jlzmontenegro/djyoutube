@@ -86,7 +86,7 @@ function parseYouTube(token) {
 
 // ---------- Estado guardado ----------
 const settings = Object.assign({
-  apiKey: '', fadeTime: 8, curve: 'smooth', videoMode: 'mix', overlayText: '', showTitle: true,
+  apiKey: '', fadeTime: 8, curve: 'smooth', videoMode: 'mix', overlayText: '', showTitle: true, hideTail: 20,
   master: 100, volA: 100, volB: 100,
 }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', settings);
@@ -746,7 +746,9 @@ if (channel) {
 
 function videoOpacity() {
   // Una bandeja preparándose o en un anuncio no se muestra: se ve la otra o queda en negro.
-  const ok = (d) => !!(d.track && !d.err && d.state !== PS.ENDED && !d.preloading && !d.inAd);
+  // Tampoco su tramo final, donde YouTube pone miniaturas de otros videos (pantalla final).
+  const inTail = (d) => settings.hideTail > 0 && d.duration > 0 && d.duration - d.time() < settings.hideTail;
+  const ok = (d) => !!(d.track && !d.err && d.state !== PS.ENDED && !d.preloading && !d.inAd && !inTail(d));
   const a = ok(decks.A), b = ok(decks.B);
   if (settings.videoMode === 'A') return [a ? 1 : 0, 0];
   if (settings.videoMode === 'B') return [0, b ? 1 : 0];
@@ -1102,6 +1104,128 @@ function renderResults() {
 }
 
 // =====================================================================
+// Medidores de nivel (VU)
+// YouTube no deja leer el audio de su reproductor. Sin captura, el nivel se estima con el volumen
+// de salida de cada bandeja (y late al BPM si se marcó con TAP). Con «Medir audio real» se analiza
+// el sonido de esta pestaña: el master es real y A/B lo reparten según su volumen.
+// =====================================================================
+const METER_SEGMENTS = 15;
+const meters = {};
+let realMeter = null;
+
+function buildMeter(id) {
+  const el = $('#' + id);
+  el.innerHTML = Array.from({ length: METER_SEGMENTS },
+    (_, i) => `<i class="${i >= 13 ? 'r' : i >= 10 ? 'y' : 'g'}"></i>`).join('');
+  return { el, segs: [...el.children], level: 0, peak: 0, peakAt: 0, lit: -1, peakIdx: -1 };
+}
+
+// Cuánto volumen está enviando la bandeja (0..1), solo si suena de verdad
+function deckDrive(d) {
+  if (!d.track || !d.playing || d.preloading || d.inAd || d.err || d.state !== PS.PLAYING) return 0;
+  return d.outVolume / 100;
+}
+
+// Envolvente simulada: golpe en cada tiempo si hay BPM; si no, una variación suave
+function simEnvelope(d, now) {
+  if (d.bpm) {
+    const phase = (d.time() * d.bpm / 60) % 1;
+    return 0.38 + 0.3 * Math.exp(-phase * 5);
+  }
+  const t = now / 1000 + (d.letter === 'A' ? 0 : 7.7);
+  return 0.45 + 0.12 * Math.sin(t * 7.3) * Math.sin(t * 2.9) + 0.06 * Math.sin(t * 17.1);
+}
+
+// Amplitud (lineal) → posición del medidor en escala de dB (-48 dB … 0 dB)
+const ampToMeter = (amp) => (amp <= 0 ? 0 : clamp((20 * Math.log10(amp) + 48) / 48, 0, 1));
+
+function realAmplitude() {
+  const { analyser, buf } = realMeter;
+  analyser.getFloatTimeDomainData(buf);
+  let sum = 0;
+  for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+  return Math.sqrt(sum / buf.length) * 2.2; // RMS con margen para que la música normal llegue al amarillo
+}
+
+function updateMeter(m, target, now) {
+  m.level = target > m.level ? target : Math.max(target, m.level - 0.02); // sube rápido, cae más lento
+  if (m.level >= m.peak || now - m.peakAt > 1200) { m.peak = m.level; m.peakAt = now; }
+  const lit = Math.round(m.level * METER_SEGMENTS);
+  const peakIdx = m.peak > 0.03 ? Math.min(METER_SEGMENTS, Math.round(m.peak * METER_SEGMENTS)) - 1 : -1;
+  if (lit === m.lit && peakIdx === m.peakIdx) return;
+  m.lit = lit;
+  m.peakIdx = peakIdx;
+  m.segs.forEach((s, i) => s.classList.toggle('on', i < lit || i === peakIdx));
+}
+
+function drawMeters(now) {
+  const dA = deckDrive(decks.A), dB = deckDrive(decks.B);
+  let ampA, ampB, ampM;
+  if (realMeter) {
+    ampM = realAmplitude();
+    const total = dA * dA + dB * dB;
+    ampA = total ? ampM * Math.sqrt(dA * dA / total) : 0;
+    ampB = total ? ampM * Math.sqrt(dB * dB / total) : 0;
+  } else {
+    ampA = dA * simEnvelope(decks.A, now);
+    ampB = dB * simEnvelope(decks.B, now);
+    ampM = Math.min(1, Math.hypot(ampA, ampB));
+  }
+  updateMeter(meters.A, ampToMeter(ampA), now);
+  updateMeter(meters.B, ampToMeter(ampB), now);
+  updateMeter(meters.M, ampToMeter(ampM), now);
+  requestAnimationFrame(drawMeters);
+}
+
+function paintMeterButton() {
+  const b = $('#btnMeter');
+  b.classList.toggle('on', !!realMeter);
+  b.textContent = realMeter ? '● Midiendo audio real (clic para apagar)' : 'Medir audio real';
+}
+
+async function toggleRealMeter() {
+  if (realMeter) return stopRealMeter();
+  if (!navigator.mediaDevices?.getDisplayMedia) {
+    toast('Este navegador no permite medir el audio. Usa Chrome o Edge.', 'error');
+    return;
+  }
+  toast('Elige «Esta pestaña» y deja activado «Compartir también el audio de la pestaña».');
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: 1 },
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      preferCurrentTab: true, selfBrowserSurface: 'include', surfaceSwitching: 'exclude', systemAudio: 'exclude',
+    });
+  } catch {
+    toast('No se activó el medidor real');
+    return;
+  }
+  const track = stream.getAudioTracks()[0];
+  if (!track) {
+    stream.getTracks().forEach((t) => t.stop());
+    toast('No se compartió el audio. Inténtalo otra vez y activa «Compartir también el audio».', 'error');
+    return;
+  }
+  const ctx = new AudioContext();
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 1024;
+  ctx.createMediaStreamSource(new MediaStream([track])).connect(analyser); // sin salida: no duplica el sonido
+  realMeter = { stream, ctx, analyser, buf: new Float32Array(analyser.fftSize) };
+  stream.getTracks().forEach((t) => t.addEventListener('ended', stopRealMeter));
+  paintMeterButton();
+  toast('Medidor real activado. Para apagarlo, pulsa el botón otra vez.', 'ok');
+}
+
+function stopRealMeter() {
+  if (!realMeter) return;
+  realMeter.stream.getTracks().forEach((t) => t.stop());
+  realMeter.ctx.close();
+  realMeter = null;
+  paintMeterButton();
+}
+
+// =====================================================================
 // Interfaz: eventos
 // =====================================================================
 function bindMixer() {
@@ -1151,6 +1275,10 @@ function bindMixer() {
   const showTitle = $('#showTitle');
   showTitle.checked = settings.showTitle;
   showTitle.addEventListener('change', () => { settings.showTitle = showTitle.checked; saveSettings(); publish(); });
+
+  const hideTail = $('#hideTail');
+  hideTail.value = String(settings.hideTail);
+  hideTail.addEventListener('change', () => { settings.hideTail = +hideTail.value; saveSettings(); publish(); });
 
   $('#btnProjector').addEventListener('click', openProjector);
 }
@@ -1390,6 +1518,12 @@ bindDialogs();
 bindKeyboard();
 setXf(0);
 drawList();
+
+meters.A = buildMeter('meterA');
+meters.B = buildMeter('meterB');
+meters.M = buildMeter('meterM');
+$('#btnMeter').addEventListener('click', toggleRealMeter);
+requestAnimationFrame(drawMeters);
 
 // Recuperar títulos que quedaron pendientes (p. ej. sin internet la última vez)
 for (const p of playlists) for (const t of p.tracks) if (t.title === LOADING_TITLE) queueMeta(t.id);

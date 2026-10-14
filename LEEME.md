@@ -24,6 +24,9 @@ Usa **Chrome o Edge**: con ellos la proyección puede abrirse directamente en el
   Los cues, hot cues y BPM se guardan por canción.
 - **Mezclador:** volumen de A, B y master, crossfader con 3 curvas, *Auto-fade* y *AutoMix*
   (mezcla sola la lista con el tiempo de fundido elegido).
+- **Medidores de nivel (verde/amarillo/rojo):** por defecto muestran el volumen que envía cada bandeja
+  (y laten al BPM si lo marcaste con TAP). Con **Medir audio real** el navegador te pide compartir
+  «Esta pestaña» con su audio: entonces el master mide el sonido de verdad y A/B lo reparten según sus faders.
 
 ## Proyectar el video
 
@@ -55,6 +58,8 @@ Para Zoom, Meet u OBS, comparte la ventana de proyección. **El sonido sale de l
   en silencio antes de quedar lista; AutoMix no cruza a una bandeja que siga en un anuncio; y en la
   proyección se oculta cualquier video que esté en un anuncio. Para no tener anuncios de ningún tipo,
   usa **YouTube Premium** con tu cuenta abierta en youtube.com en el mismo navegador.
+- Las **miniaturas del final** (pantalla final de YouTube) no se pueden quitar del reproductor. La opción
+  *Ocultar final del video* (20 s por defecto) hace que la proyección muestre la otra bandeja o negro en ese tramo.
 - Algunos videos **no permiten** reproducirse fuera de YouTube (salen marcados como *NO DISPONIBLE*).
 - No hay ecualizador, filtros ni forma de onda: YouTube no deja procesar su audio.
 - La velocidad solo va en pasos (0.25×, 0.5×, 0.75×, 1×, 1.25×…); los loops cortos pueden sonar con un pequeño corte.

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
   <div id="fileWarning" class="banner hidden">
@@ -37,20 +37,33 @@
       <div class="faders">
         <div class="fader-col fa">
           <span class="f-label">A</span>
-          <input type="range" id="volA" class="vfader" min="0" max="100" value="100" title="Volumen bandeja A">
+          <div class="fader-body">
+            <input type="range" id="volA" class="vfader" min="0" max="100" value="100" title="Volumen bandeja A">
+            <div class="meter" id="meterA"></div>
+          </div>
           <span class="f-val" id="volAVal">100</span>
         </div>
         <div class="fader-col fm">
           <span class="f-label">Master</span>
-          <input type="range" id="master" class="vfader" min="0" max="100" value="100" title="Volumen general">
+          <div class="fader-body">
+            <input type="range" id="master" class="vfader" min="0" max="100" value="100" title="Volumen general">
+            <div class="meter" id="meterM"></div>
+          </div>
           <span class="f-val" id="masterVal">100</span>
         </div>
         <div class="fader-col fb">
           <span class="f-label">B</span>
-          <input type="range" id="volB" class="vfader" min="0" max="100" value="100" title="Volumen bandeja B">
+          <div class="fader-body">
+            <input type="range" id="volB" class="vfader" min="0" max="100" value="100" title="Volumen bandeja B">
+            <div class="meter" id="meterB"></div>
+          </div>
           <span class="f-val" id="volBVal">100</span>
         </div>
       </div>
+      <button id="btnMeter" class="btn small wide"
+              title="Mide el sonido real de esta pestaña. El navegador te pedirá compartir «Esta pestaña» con su audio.">
+        Medir audio real
+      </button>
 
       <div class="xfader">
         <span class="x-a">A</span>
@@ -94,6 +107,15 @@
       <button id="btnBlackout" class="btn wide" title="Tecla N">Pantalla negra</button>
       <input id="overlayText" class="input" maxlength="60" placeholder="Texto en pantalla (ej. DJ Jose)">
       <label class="check"><input type="checkbox" id="showTitle"> Mostrar nombre de la canción</label>
+      <label class="field" title="En los últimos segundos YouTube pone miniaturas de otros videos (pantalla final). Durante ese tramo la proyección muestra la otra bandeja o negro.">
+        Ocultar final del video (miniaturas)
+        <select id="hideTail" class="input">
+          <option value="0">No ocultar</option>
+          <option value="10">Últimos 10 s</option>
+          <option value="20">Últimos 20 s</option>
+          <option value="30">Últimos 30 s</option>
+        </select>
+      </label>
     </section>
 
     <div id="slotB"></div>
@@ -254,7 +276,7 @@
 
   <div id="toasts"></div>
 
-  <script src="js/app.js?v=3"></script>
+  <script src="js/app.js?v=5"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
