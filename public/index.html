@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DJ YouTube</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="fileWarning" class="banner hidden">
+    Esta página se abrió como archivo y YouTube no la dejará reproducir.
+    Ciérrala y abre la app desde su enlace web o con <b>Iniciar DJ YouTube.bat</b>.
+  </div>
+
+  <header class="topbar">
+    <div class="brand"><span class="logo">🎧</span> DJ <b>YouTube</b></div>
+    <div class="top-actions">
+      <span id="projStatus" class="pill">Proyección cerrada</span>
+      <button id="btnProjector" class="btn accent">📺 Abrir proyección</button>
+      <button id="btnHelp" class="btn ghost" title="Atajos de teclado y ayuda">⌨ Ayuda</button>
+      <button id="btnSettings" class="btn ghost">⚙ Ajustes</button>
+    </div>
+  </header>
+
+  <main class="console">
+    <div id="slotA"></div>
+
+    <section class="mixer panel">
+      <h3 class="panel-title">Mezclador</h3>
+      <div class="faders">
+        <div class="fader-col fa">
+          <span class="f-label">A</span>
+          <input type="range" id="volA" class="vfader" min="0" max="100" value="100" title="Volumen bandeja A">
+          <span class="f-val" id="volAVal">100</span>
+        </div>
+        <div class="fader-col fm">
+          <span class="f-label">Master</span>
+          <input type="range" id="master" class="vfader" min="0" max="100" value="100" title="Volumen general">
+          <span class="f-val" id="masterVal">100</span>
+        </div>
+        <div class="fader-col fb">
+          <span class="f-label">B</span>
+          <input type="range" id="volB" class="vfader" min="0" max="100" value="100" title="Volumen bandeja B">
+          <span class="f-val" id="volBVal">100</span>
+        </div>
+      </div>
+
+      <div class="xfader">
+        <span class="x-a">A</span>
+        <input type="range" id="xfader" min="0" max="1000" value="0" title="Crossfader (doble clic: centrar)">
+        <span class="x-b">B</span>
+      </div>
+
+      <div class="mix-row">
+        <label class="field">Curva
+          <select id="xfCurve" class="input">
+            <option value="smooth">Suave</option>
+            <option value="linear">Lineal</option>
+            <option value="cut">Corte</option>
+          </select>
+        </label>
+        <label class="field">Fundido
+          <select id="fadeTime" class="input">
+            <option value="2">2 s</option>
+            <option value="4">4 s</option>
+            <option value="8">8 s</option>
+            <option value="12">12 s</option>
+            <option value="16">16 s</option>
+            <option value="24">24 s</option>
+          </select>
+        </label>
+      </div>
+      <button id="btnAutoFade" class="btn accent wide" title="Cruza a la otra bandeja (la arranca si está en pausa). Tecla F">⇄ Auto-fade</button>
+      <label class="switch wide" title="Mezcla sola las canciones de la lista activa, una tras otra">
+        <input type="checkbox" id="automix"><span class="knob"></span> AutoMix <small>— mezcla sola la lista</small>
+      </label>
+
+      <h3 class="panel-title">Video en proyección</h3>
+      <div class="seg" id="videoMode">
+        <button data-mode="mix" title="El video sigue al crossfader">Mezcla</button>
+        <button data-mode="A">Solo A</button>
+        <button data-mode="B">Solo B</button>
+      </div>
+      <div class="vmix" title="Lo que se ve ahora en la proyección">
+        <span>A</span><div class="vmix-bar"><div id="vmixFill"></div></div><span>B</span>
+      </div>
+      <button id="btnBlackout" class="btn wide" title="Tecla N">⬛ Pantalla negra</button>
+      <input id="overlayText" class="input" maxlength="60" placeholder="Texto en pantalla (ej. DJ Jose)">
+      <label class="check"><input type="checkbox" id="showTitle"> Mostrar nombre de la canción</label>
+    </section>
+
+    <div id="slotB"></div>
+  </main>
+
+  <section class="library panel">
+    <div class="lib-head">
+      <h3 class="panel-title">Lista</h3>
+      <select id="plSelect" class="input" title="Lista activa"></select>
+      <button id="plNew" class="btn small">+ Nueva</button>
+      <button id="plRename" class="btn small">Renombrar</button>
+      <button id="plDelete" class="btn small">Eliminar</button>
+      <button id="plExport" class="btn small">Exportar</button>
+      <label class="btn small">Importar<input type="file" id="plImport" accept=".json,application/json" hidden></label>
+    </div>
+
+    <form id="addForm" class="add-bar">
+      <input id="addInput" class="input" autocomplete="off"
+             placeholder="Pega enlaces de YouTube (canciones o listas) o escribe para buscar…">
+      <button type="submit" class="btn accent">Agregar / Buscar</button>
+      <button type="button" id="btnYtSearch" class="btn ghost" title="Busca en YouTube en otra pestaña para copiar enlaces">Abrir YouTube ↗</button>
+    </form>
+
+    <div id="results" class="results hidden"></div>
+
+    <div class="list-tools">
+      <input id="filter" class="input" placeholder="Filtrar esta lista…">
+      <span id="listCount" class="muted"></span>
+    </div>
+    <ol id="trackList" class="tracks"></ol>
+    <p id="emptyHint" class="empty">
+      Tu lista está vacía. Pega arriba un enlace de YouTube (por ejemplo
+      <code>https://www.youtube.com/watch?v=…</code>) o el enlace de una lista
+      (<code>https://www.youtube.com/playlist?list=…</code>) y pulsa <b>Agregar</b>.
+    </p>
+  </section>
+
+  <p class="foot muted">
+    La música y los videos se reproducen con el reproductor oficial de YouTube: pueden salir anuncios y
+    algunos videos no permiten reproducirse fuera de YouTube.
+  </p>
+
+  <template id="deckTpl">
+    <section class="deck panel">
+      <div class="deck-head">
+        <span class="deck-letter"></span>
+        <div class="deck-title">
+          <div class="t-title"></div>
+          <div class="t-author"></div>
+        </div>
+        <button class="btn small b-next" title="Cargar la siguiente canción de la lista">Siguiente ⏭</button>
+      </div>
+      <div class="video-wrap">
+        <div class="yt"></div>
+        <div class="deck-msg" hidden></div>
+        <div class="onair-badge">AL AIRE</div>
+        <div class="deck-ad" hidden></div>
+      </div>
+      <div class="bar" title="Haz clic para saltar a ese punto">
+        <div class="loop-zone" hidden></div>
+        <div class="fill"></div>
+        <div class="cue-mark" hidden></div>
+        <div class="hot-marks"></div>
+      </div>
+      <div class="times">
+        <span class="t-elapsed">0:00</span>
+        <span class="t-bpm">— BPM</span>
+        <span class="t-remain">-0:00</span>
+      </div>
+      <div class="transport">
+        <button class="btn cue" title="CUE: en pausa guarda el punto; sonando vuelve a él y pausa. Mayús+clic: ir al cue">CUE</button>
+        <button class="btn play" title="Reproducir / pausa">▶</button>
+        <button class="btn back" title="Atrás 5 segundos">«5s</button>
+        <button class="btn fwd" title="Adelante 5 segundos">5s»</button>
+      </div>
+      <div class="ctrl-row">
+        <span class="lbl">Hot cues</span>
+        <div class="group">
+          <button class="btn hc">1</button><button class="btn hc">2</button><button class="btn hc">3</button><button class="btn hc">4</button>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <span class="lbl">Loop</span>
+        <div class="group">
+          <button class="btn small l-in" title="Inicio del loop">IN</button>
+          <button class="btn small l-out" title="Fin del loop (empieza a repetir)">OUT</button>
+          <button class="btn small l-exit" title="Salir del loop / volver a activarlo">SALIR</button>
+          <button class="btn small l-beat" data-beats="4" title="Loop de 4 tiempos (requiere BPM)">4</button>
+          <button class="btn small l-beat" data-beats="8" title="Loop de 8 tiempos (requiere BPM)">8</button>
+          <button class="btn small l-beat" data-beats="16" title="Loop de 16 tiempos (requiere BPM)">16</button>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <span class="lbl">Tempo</span>
+        <div class="group">
+          <button class="btn small t-down" title="Más lento">−</button>
+          <span class="t-rate">1.00×</span>
+          <button class="btn small t-up" title="Más rápido">+</button>
+          <button class="btn small t-reset" title="Velocidad normal">1×</button>
+          <button class="btn small tap" title="Toca al ritmo (4 veces o más) para medir el BPM">TAP</button>
+        </div>
+      </div>
+    </section>
+  </template>
+
+  <dialog id="dlgSettings">
+    <form method="dialog">
+      <h2>Ajustes</h2>
+      <label class="field block">Clave de la API de YouTube (opcional, para buscar desde la app)
+        <input id="apiKey" class="input" autocomplete="off" spellcheck="false" placeholder="AIza…">
+      </label>
+      <details>
+        <summary>¿Cómo consigo una clave gratis?</summary>
+        <ol>
+          <li>Entra a <b>console.cloud.google.com</b> con tu cuenta de Google y crea un proyecto.</li>
+          <li>En «APIs y servicios → Biblioteca» activa <b>YouTube Data API v3</b>.</li>
+          <li>En «Credenciales» pulsa <b>Crear credenciales → Clave de API</b>.</li>
+          <li>Copia la clave y pégala aquí. (Recomendado: restríngela a los sitios web <code id="keySite">http://localhost:8090/*</code>.)</li>
+        </ol>
+        <p class="muted">Sin clave puedes seguir pegando enlaces de videos y listas de YouTube.</p>
+      </details>
+      <div class="dlg-actions">
+        <button value="clear" id="btnClearData" class="btn small danger" type="button">Borrar todos mis datos</button>
+        <span class="spacer"></span>
+        <button value="cancel" class="btn">Cancelar</button>
+        <button value="save" class="btn accent">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlgHelp">
+    <form method="dialog">
+      <h2>Ayuda rápida</h2>
+      <div class="help-grid">
+        <div>
+          <h4>Bandeja A</h4>
+          <p><kbd>Q</kbd> play / pausa · <kbd>W</kbd> CUE<br><kbd>1</kbd>–<kbd>4</kbd> hot cues</p>
+          <h4>Bandeja B</h4>
+          <p><kbd>P</kbd> play / pausa · <kbd>O</kbd> CUE<br><kbd>7</kbd>–<kbd>0</kbd> hot cues</p>
+          <p class="muted">Mayús + número borra el hot cue (o clic derecho en el botón).</p>
+        </div>
+        <div>
+          <h4>Mezclador</h4>
+          <p><kbd>←</kbd> <kbd>→</kbd> mover crossfader · <kbd>↓</kbd> centrar<br>
+             <kbd>F</kbd> auto-fade · <kbd>N</kbd> pantalla negra</p>
+          <h4>Lista</h4>
+          <p>Arrastra canciones a una bandeja o a otra posición de la lista.
+             Doble clic carga la canción en la bandeja que no está al aire.</p>
+        </div>
+      </div>
+      <h4>Proyectar el video</h4>
+      <p>Pulsa <b>📺 Abrir proyección</b>. Si tienes un segundo monitor o proyector conectado (modo «Extender»),
+         la ventana se abre allí; si no, arrástrala a esa pantalla y haz doble clic para pantalla completa.
+         Para videollamadas u OBS comparte esa ventana. Deja esta consola abierta: el sonido sale de aquí.</p>
+      <div class="dlg-actions"><span class="spacer"></span><button class="btn accent">Entendido</button></div>
+    </form>
+  </dialog>
+
+  <div id="toasts"></div>
+
+  <script src="js/app.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>
