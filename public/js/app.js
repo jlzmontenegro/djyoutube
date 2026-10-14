@@ -6,6 +6,8 @@
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
+// Debe coincidir con APP_VERSION de proyeccion.js: así la consola detecta una proyección desactualizada.
+const APP_VERSION = '10';
 const PS = { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 };
 const DRAG_TRACK = 'application/x-djyt-track';
 const DRAG_INDEX = 'application/x-djyt-index';
@@ -813,12 +815,16 @@ function autoNextTick() {
 const channel = 'BroadcastChannel' in window ? new BroadcastChannel('djyoutube') : null;
 let projWin = null;
 let projLastSeen = 0;
+let projVersion = null;
 
 if (channel) {
   channel.onmessage = (e) => {
     const m = e.data;
     if (!m) return;
-    if (m.type === 'hello' || m.type === 'alive') projLastSeen = Date.now();
+    if (m.type === 'hello' || m.type === 'alive') {
+      projLastSeen = Date.now();
+      projVersion = m.version || null; // las versiones viejas no la envían
+    }
     if (m.type === 'hello') publish();
   };
 }
@@ -865,9 +871,21 @@ function publish() {
 }
 
 async function openProjector() {
-  if (projWin && !projWin.closed) {
-    projWin.focus();
+  const name = 'djyt-proyeccion';
+  const url = `proyeccion.html?v=${APP_VERSION}`;
+  const connected = Date.now() - projLastSeen < 3000;
+  // Ya abierta y con el código actual: solo traerla al frente
+  if (connected && projVersion === APP_VERSION) {
+    const w = projWin && !projWin.closed ? projWin : window.open('', name);
+    w?.focus();
     toast('La ventana de proyección ya está abierta');
+    return;
+  }
+  // Abierta pero con una versión vieja (p. ej. de antes de una actualización): recargarla
+  if (connected || (projWin && !projWin.closed)) {
+    projWin = window.open(url, name);
+    projWin?.focus();
+    toast('La ventana de proyección se actualizó a la última versión', 'ok');
     return;
   }
   let features = 'popup=yes,width=1280,height=720';
@@ -883,7 +901,7 @@ async function openProjector() {
       }
     } catch { /* permiso denegado: se abre en esta pantalla */ }
   }
-  projWin = window.open('proyeccion.html', 'djyt-proyeccion', features);
+  projWin = window.open(url, name, features);
   if (!projWin) {
     toast('El navegador bloqueó la ventana. Pulsa otra vez «Abrir proyección» o permite ventanas emergentes para esta página.', 'error');
     return;

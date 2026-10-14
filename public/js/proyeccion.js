@@ -2,6 +2,8 @@
 /* DJ YouTube — ventana de proyección.
    Muestra en silencio los mismos videos que las bandejas de la consola y los mantiene sincronizados. */
 
+// Debe coincidir con APP_VERSION de app.js: así la consola detecta una proyección desactualizada.
+const APP_VERSION = '10';
 const PS = { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3 };
 const channel = new BroadcastChannel('djyoutube');
 const layers = { A: document.getElementById('layerA'), B: document.getElementById('layerB') };
@@ -68,8 +70,8 @@ channel.onmessage = (e) => {
   lastMsgAt = Date.now();
   apply(last);
 };
-channel.postMessage({ type: 'hello' });
-setInterval(() => channel.postMessage({ type: 'alive' }), 1000);
+channel.postMessage({ type: 'hello', version: APP_VERSION });
+setInterval(() => channel.postMessage({ type: 'alive', version: APP_VERSION }), 1000);
 
 function apply(s) {
   if (!!s.captions !== captionsOn) {
@@ -199,6 +201,9 @@ hintOff.addEventListener('change', () => {
   } catch { /* almacenamiento bloqueado */ }
 });
 document.getElementById('btnHintClose').addEventListener('click', closeHint);
+// También se cierra con Esc o con un clic fuera del recuadro
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHint(); });
+hint.addEventListener('click', (e) => { if (!e.target.closest('.card')) closeHint(); });
 document.addEventListener('fullscreenchange', () => { if (document.fullscreenElement) closeHint(); });
 
 if (!hintDisabled()) {
