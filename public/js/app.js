@@ -165,7 +165,7 @@ class Deck {
     this.loadedAt = 0;
     this.lastRaw = -1;
     this.lastRawAt = 0;
-    this.nudged = false;
+    this.nudged = 0;
 
     this.bindUI();
     this.render();
@@ -277,7 +277,7 @@ class Deck {
     this.loadedAt = now;
     this.lastRaw = -1;
     this.lastRawAt = now;
-    this.nudged = false;
+    this.nudged = 0;
     this.setAd(false);
 
     lastLoadedId = track.id;
@@ -344,9 +344,12 @@ class Deck {
       }
     }
     if (this.preloading) {
-      if (this.state === PS.PLAYING && raw > this.cue + 0.3) return this.finishPreload();
-      if (!this.nudged && now - this.loadedAt > 2000 && this.state !== PS.PLAYING && this.state !== PS.BUFFERING) {
-        this.nudged = true;
+      // Durante un anuncio el tiempo de la canción se queda en el cue; si avanzó, ya es la canción.
+      if (raw > this.cue + 0.1 || now - this.loadedAt > 90000) return this.finishPreload();
+      // El navegador a veces pausa los videos en silencio: insistir cada 2 s
+      if (now - this.loadedAt > 1500 && now - (this.nudged || 0) > 2000 &&
+          this.state !== PS.PLAYING && this.state !== PS.BUFFERING) {
+        this.nudged = now;
         this.player.playVideo();
       }
       this.setAd(now - this.loadedAt > 2500 ? 'prep' : false);

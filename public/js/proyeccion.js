@@ -85,10 +85,10 @@ function syncDeck(k, st, sentAt) {
 
   // Calentando: se deja correr oculta y en silencio (con su posible anuncio) hasta que la canción avanza
   if (d.warming) {
-    if (state === PS.PLAYING && raw > d.startAt + 0.3) d.warming = false;
+    if (raw > d.startAt + 0.1) d.warming = false;
     else {
       if (state !== PS.PLAYING && state !== PS.BUFFERING && now - d.loadedAt > 1500) p.playVideo();
-      if (now - d.loadedAt > 180000) d.warming = false;
+      if (now - d.loadedAt > 90000) d.warming = false;
       return;
     }
   }
