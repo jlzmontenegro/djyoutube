@@ -104,7 +104,7 @@ function setCaptions(player, on) {
 
 // ---------- Estado guardado ----------
 const settings = Object.assign({
-  apiKey: '', fadeTime: 8, curve: 'smooth', videoMode: 'mix', overlayText: '', showTitle: true, hideTail: 20, captions: false,
+  apiKey: '', fadeTime: 8, curve: 'smooth', videoMode: 'mix', overlayText: '', showTitle: true, hideTail: 20, captions: false, autoNext: true,
   master: 100, volA: 100, volB: 100,
 }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', settings);
@@ -409,6 +409,16 @@ class Deck {
     this.capsAt = now;
     this.capsCount = (this.capsCount || 0) + 1;
     setCaptions(this.player, settings.captions);
+  }
+
+  // YouTube vuelve a activar los subtítulos por su cuenta (p. ej. si el video está en otro idioma
+  // o la cuenta los tiene siempre activos): con la casilla apagada se quitan cada segundo.
+  enforceCaptions() {
+    if (settings.captions || !this.ready || !this.track) return;
+    const now = performance.now();
+    if (now - (this.capsAt || 0) < 1000) return;
+    this.capsAt = now;
+    setCaptions(this.player, false);
   }
 
   setMsg(text) {
@@ -745,17 +755,55 @@ function automixTick() {
     return;
   }
 
-  // Cuando falta poco, cruzar
+  // Cuando falta poco, cruzar (terminando justo antes de las miniaturas del final)
   const remain = live.duration - live.time();
-  if (live.duration > 0 && !live.loop.on && remain <= settings.fadeTime + 0.5) {
+  if (live.duration > 0 && !live.loop.on && remain <= mixPoint() + 0.5) {
     if (!other.track || other.err) {
       if (!automixEndNotified) toast('AutoMix: no hay más canciones en la lista');
       automixEndNotified = true;
       return;
     }
     if (other.preloading) return; // la siguiente aún está en un anuncio: no cruzar todavía
-    const outgoing = live;
-    autoFade(other.letter, clamp(remain, 1, settings.fadeTime), () => { if (automixOn) outgoing.pause(); });
+    crossToNext(live, other, remain);
+  }
+}
+
+// Segundos antes del final en que empieza el cruce: el fundido termina justo donde
+// empieza el tramo oculto del video (las miniaturas de YouTube).
+const mixPoint = () => settings.fadeTime + (settings.hideTail || 0);
+
+function crossToNext(outgoing, incoming, remain) {
+  const seconds = clamp(remain - (settings.hideTail || 0), 1, settings.fadeTime);
+  autoFade(incoming.letter, seconds, () => outgoing.pause());
+}
+
+// Sin AutoMix: si está activada la casilla, la canción al aire pasa sola a la siguiente
+// antes de las miniaturas. Respeta lo que hace el DJ: si ya arrancó la otra bandeja, no toca nada.
+let autoNextPrepared = null;
+function autoNextTick() {
+  if (automixOn || !settings.autoNext || fade || !ytReady) return;
+  const live = mixer.xf < 0.5 ? decks.A : decks.B;
+  const other = live === decks.A ? decks.B : decks.A;
+  if (!live.track || !live.playing || live.preloading || live.loop.on || live.duration <= 0) return;
+  if (other.playing) return;
+  const remain = live.duration - live.time();
+
+  // Dejar lista la siguiente con tiempo (por si YouTube mete un anuncio al cargarla)
+  const token = live.letter + live.loadToken;
+  if (remain <= mixPoint() + 45 && autoNextPrepared !== token) {
+    autoNextPrepared = token;
+    if (!other.track || other.hasPlayed || other.err) {
+      const next = nextTrack(live.track.id);
+      if (next) other.load(next);
+    }
+  }
+  if (other.err && other.track) {
+    const next = nextTrack(other.track.id);
+    if (next) other.load(next);
+    return;
+  }
+  if (remain <= mixPoint() + 0.5 && other.track && !other.preloading && !other.hasPlayed) {
+    crossToNext(live, other, remain);
   }
 }
 
@@ -1317,6 +1365,10 @@ function bindMixer() {
     publish();
   });
 
+  const autoNext = $('#autoNext');
+  autoNext.checked = settings.autoNext;
+  autoNext.addEventListener('change', () => { settings.autoNext = autoNext.checked; saveSettings(); });
+
   const hideTail = $('#hideTail');
   hideTail.value = String(settings.hideTail);
   hideTail.addEventListener('change', () => { settings.hideTail = +hideTail.value; saveSettings(); publish(); });
@@ -1581,6 +1633,8 @@ setInterval(() => {
 setInterval(() => {
   for (const d of deckList) d.el.classList.toggle('onair', d.isOnAir());
   automixTick();
+  autoNextTick();
+  for (const d of deckList) d.enforceCaptions();
   publish();
   updateProjStatus();
 }, 200);

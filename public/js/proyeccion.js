@@ -77,7 +77,12 @@ function apply(s) {
     applyCaptions(decks.A, true);
     applyCaptions(decks.B, true);
   }
-  for (const k of ['A', 'B']) syncDeck(k, s.decks[k], s.sentAt);
+  for (const k of ['A', 'B']) {
+    syncDeck(k, s.decks[k], s.sentAt);
+    // YouTube vuelve a activar los subtítulos por su cuenta: con la casilla apagada se quitan cada segundo
+    const d = decks[k];
+    if (!captionsOn && d.videoId && Date.now() - (d.capsAt || 0) > 1000) applyCaptions(d, true);
+  }
   // Una capa preparándose o detenida en un anuncio no se muestra en la pantalla
   const hidden = (k) => s.blackout || decks[k].warming || decks[k].stuck;
   const oa = hidden('A') ? 0 : s.opacity.A;

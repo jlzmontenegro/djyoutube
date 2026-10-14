@@ -60,7 +60,9 @@ Para Zoom, Meet u OBS, comparte la ventana de proyección. **El sonido sale de l
   proyección se oculta cualquier video que esté en un anuncio. Para no tener anuncios de ningún tipo,
   usa **YouTube Premium** con tu cuenta abierta en youtube.com en el mismo navegador.
 - Las **miniaturas del final** (pantalla final de YouTube) no se pueden quitar del reproductor. La opción
-  *Ocultar final del video* (20 s por defecto) hace que la proyección muestre la otra bandeja o negro en ese tramo.
+  *Ocultar final del video* (20 s por defecto) oculta ese tramo en la proyección. Con la casilla
+  *Pasar sola a la siguiente antes de las miniaturas* (o con AutoMix), la siguiente canción de la lista
+  entra con un fundido que termina justo donde empieza ese tramo, así nunca se ven las miniaturas.
 - Algunos videos **no permiten** reproducirse fuera de YouTube (salen marcados como *NO DISPONIBLE*).
 - No hay ecualizador, filtros ni forma de onda: YouTube no deja procesar su audio.
 - La velocidad solo va en pasos (0.25×, 0.5×, 0.75×, 1×, 1.25×…); los loops cortos pueden sonar con un pequeño corte.
