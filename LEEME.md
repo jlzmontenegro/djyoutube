@@ -37,7 +37,8 @@ Usa **Chrome o Edge**: con ellos la proyección puede abrirse directamente en el
 3. Haz **doble clic** en la ventana de proyección (o pulsa **F**) para pantalla completa.
 
 El video sigue al crossfader (o elige *Solo A* / *Solo B*). También puedes poner la pantalla en negro,
-un texto fijo (tu nombre de DJ) y mostrar el nombre de cada canción al entrar.
+un texto fijo (tu nombre de DJ), mostrar el nombre de cada canción al entrar, activar o quitar los
+subtítulos (CC) y ocultar el final de cada video, donde YouTube pone miniaturas.
 Para Zoom, Meet u OBS, comparte la ventana de proyección. **El sonido sale de la consola**, no de la proyección.
 
 ## Atajos de teclado

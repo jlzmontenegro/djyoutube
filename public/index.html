@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=5">
+  <link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
   <div id="fileWarning" class="banner hidden">
@@ -107,6 +107,9 @@
       <button id="btnBlackout" class="btn wide" title="Tecla N">Pantalla negra</button>
       <input id="overlayText" class="input" maxlength="60" placeholder="Texto en pantalla (ej. DJ Jose)">
       <label class="check"><input type="checkbox" id="showTitle"> Mostrar nombre de la canción</label>
+      <label class="check" title="Subtítulos de YouTube en las bandejas y en la proyección">
+        <input type="checkbox" id="captions"> Mostrar subtítulos (CC)
+      </label>
       <label class="field" title="En los últimos segundos YouTube pone miniaturas de otros videos (pantalla final). Durante ese tramo la proyección muestra la otra bandeja o negro.">
         Ocultar final del video (miniaturas)
         <select id="hideTail" class="input">
@@ -276,7 +279,7 @@
 
   <div id="toasts"></div>
 
-  <script src="js/app.js?v=5"></script>
+  <script src="js/app.js?v=7"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

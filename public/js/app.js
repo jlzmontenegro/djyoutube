@@ -84,9 +84,27 @@ function parseYouTube(token) {
   return { video, list: u.searchParams.get('list') };
 }
 
+// Activa o quita los subtítulos (CC) de un reproductor. Al activarlos se elige una pista:
+// el idioma del navegador, luego inglés, luego la primera que tenga el video.
+function setCaptions(player, on) {
+  try {
+    if (!on) {
+      player.unloadModule('captions');
+      player.unloadModule('cc');
+      return;
+    }
+    player.loadModule('captions');
+    const list = player.getOption('captions', 'tracklist') || [];
+    const lang = (navigator.language || 'es').slice(0, 2);
+    const pick = list.find((t) => t.languageCode?.startsWith(lang)) ||
+      list.find((t) => t.languageCode?.startsWith('en')) || list[0];
+    if (pick) player.setOption('captions', 'track', { languageCode: pick.languageCode });
+  } catch { /* el video aún no cargó el módulo de subtítulos */ }
+}
+
 // ---------- Estado guardado ----------
 const settings = Object.assign({
-  apiKey: '', fadeTime: 8, curve: 'smooth', videoMode: 'mix', overlayText: '', showTitle: true, hideTail: 20,
+  apiKey: '', fadeTime: 8, curve: 'smooth', videoMode: 'mix', overlayText: '', showTitle: true, hideTail: 20, captions: false,
   master: 100, volA: 100, volB: 100,
 }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', settings);
@@ -189,6 +207,7 @@ class Deck {
         onStateChange: (e) => this.onState(e.data),
         onError: (e) => this.onError(e.data),
         onPlaybackRateChange: (e) => { this.rate = e.data; this.render(); },
+        onApiChange: () => this.applyCaptions(), // el módulo de subtítulos se carga con cada video
       },
     });
   }
@@ -293,6 +312,7 @@ class Deck {
       const rates = this.player.getAvailablePlaybackRates?.();
       if (rates && rates.length) this.rates = rates;
       this.fixTitleFromPlayer();
+      this.applyCaptions();
       // Precargando: se deja sonar en silencio (también un posible anuncio) y checkAd() la pausa
       // en el cue cuando la canción de verdad empieza a avanzar.
       if (!this.preloading && !this.playing) this.player.pauseVideo();
@@ -378,6 +398,17 @@ class Deck {
     this.ui.ad.textContent = kind === 'ad'
       ? 'Anuncio de YouTube en curso — oculto en la proyección'
       : 'Preparando… si YouTube pone un anuncio, pasa aquí en silencio';
+  }
+
+  // Subtítulos (CC) según la casilla del mezclador
+  applyCaptions(force = false) {
+    if (!this.ready) return;
+    // Evita repetirlo en bucle: activar el módulo vuelve a disparar onApiChange
+    const now = performance.now();
+    if (!force && now - (this.capsAt || 0) < 400) return;
+    this.capsAt = now;
+    this.capsCount = (this.capsCount || 0) + 1;
+    setCaptions(this.player, settings.captions);
   }
 
   setMsg(text) {
@@ -781,6 +812,7 @@ function publish() {
     blackout: mixer.blackout,
     overlayText: settings.overlayText,
     showTitle: settings.showTitle,
+    captions: settings.captions,
   });
 }
 
@@ -1275,6 +1307,15 @@ function bindMixer() {
   const showTitle = $('#showTitle');
   showTitle.checked = settings.showTitle;
   showTitle.addEventListener('change', () => { settings.showTitle = showTitle.checked; saveSettings(); publish(); });
+
+  const captions = $('#captions');
+  captions.checked = settings.captions;
+  captions.addEventListener('change', () => {
+    settings.captions = captions.checked;
+    saveSettings();
+    deckList.forEach((d) => d.applyCaptions(true));
+    publish();
+  });
 
   const hideTail = $('#hideTail');
   hideTail.value = String(settings.hideTail);

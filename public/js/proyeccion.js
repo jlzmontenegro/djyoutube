@@ -15,6 +15,30 @@ let last = null;
 let lastMsgAt = 0;
 let shownTitleKey = '';
 let titleTimer = null;
+let captionsOn = false;
+
+// Subtítulos (CC) según la casilla de la consola
+function applyCaptions(d, force = false) {
+  if (!d.ready) return;
+  // Evita repetirlo en bucle: activar el módulo vuelve a disparar onApiChange
+  const now = Date.now();
+  if (!force && now - (d.capsAt || 0) < 400) return;
+  d.capsAt = now;
+  const player = d.player;
+  try {
+    if (!captionsOn) {
+      player.unloadModule('captions');
+      player.unloadModule('cc');
+      return;
+    }
+    player.loadModule('captions');
+    const list = player.getOption('captions', 'tracklist') || [];
+    const lang = (navigator.language || 'es').slice(0, 2);
+    const pick = list.find((t) => t.languageCode?.startsWith(lang)) ||
+      list.find((t) => t.languageCode?.startsWith('en')) || list[0];
+    if (pick) player.setOption('captions', 'track', { languageCode: pick.languageCode });
+  } catch { /* el video aún no cargó el módulo de subtítulos */ }
+}
 
 window.onYouTubeIframeAPIReady = () => {
   for (const k of ['A', 'B']) {
@@ -31,6 +55,8 @@ window.onYouTubeIframeAPIReady = () => {
           decks[k].player.mute();
           if (last) apply(last);
         },
+        onStateChange: (e) => { if (e.data === PS.PLAYING) applyCaptions(decks[k]); },
+        onApiChange: () => applyCaptions(decks[k]),
       },
     });
   }
@@ -46,6 +72,11 @@ channel.postMessage({ type: 'hello' });
 setInterval(() => channel.postMessage({ type: 'alive' }), 1000);
 
 function apply(s) {
+  if (!!s.captions !== captionsOn) {
+    captionsOn = !!s.captions;
+    applyCaptions(decks.A, true);
+    applyCaptions(decks.B, true);
+  }
   for (const k of ['A', 'B']) syncDeck(k, s.decks[k], s.sentAt);
   // Una capa preparándose o detenida en un anuncio no se muestra en la pantalla
   const hidden = (k) => s.blackout || decks[k].warming || decks[k].stuck;
