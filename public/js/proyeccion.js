@@ -131,19 +131,52 @@ function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen();
   else document.documentElement.requestFullscreen().catch(() => {});
 }
-document.addEventListener('dblclick', toggleFullscreen);
-document.getElementById('btnFull').addEventListener('click', toggleFullscreen);
+document.addEventListener('dblclick', (e) => {
+  if (!e.target.closest('.card')) toggleFullscreen();
+});
+document.getElementById('btnFull').addEventListener('click', () => { toggleFullscreen(); closeHint(); });
 document.addEventListener('keydown', (e) => {
   if (e.code === 'KeyF') toggleFullscreen();
 });
 
+// El aviso sale una sola vez al abrir la ventana (y nunca si se marcó «No volver a mostrar»).
+const HINT_KEY = 'djyt.projHintOff';
+const hint = document.getElementById('hint');
+const hintOff = document.getElementById('hintOff');
+let hintOpen = false;
+let hintTimer = null;
+
+function hintDisabled() {
+  try { return localStorage.getItem(HINT_KEY) === '1'; } catch { return false; }
+}
+function closeHint() {
+  if (!hintOpen) return;
+  hintOpen = false;
+  clearTimeout(hintTimer);
+  hint.classList.add('closing');
+  setTimeout(() => { hint.hidden = true; }, 400);
+}
+hintOff.addEventListener('change', () => {
+  try {
+    if (hintOff.checked) localStorage.setItem(HINT_KEY, '1');
+    else localStorage.removeItem(HINT_KEY);
+  } catch { /* almacenamiento bloqueado */ }
+});
+document.getElementById('btnHintClose').addEventListener('click', closeHint);
+document.addEventListener('fullscreenchange', () => { if (document.fullscreenElement) closeHint(); });
+
+if (!hintDisabled()) {
+  hint.hidden = false;
+  hintOpen = true;
+  hintTimer = setTimeout(closeHint, 20000);
+}
+
+// Ocultar el cursor cuando el ratón no se mueve
 let idleTimer = null;
 function wake() {
   document.body.classList.remove('idle');
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => {
-    if (Date.now() - lastMsgAt < 3000) document.body.classList.add('idle');
-  }, 3000);
+  idleTimer = setTimeout(() => document.body.classList.add('idle'), 3000);
 }
 document.addEventListener('mousemove', wake);
 wake();
@@ -152,5 +185,4 @@ setInterval(() => {
   const connected = Date.now() - lastMsgAt < 3000;
   statusEl.textContent = connected ? '● Conectada a la consola' : 'Esperando la consola de DJ… (déjala abierta)';
   statusEl.classList.toggle('on', connected);
-  if (!connected) document.body.classList.remove('idle');
 }, 1000);
