@@ -115,12 +115,15 @@ kbd { background: var(--panel-3); border: 1px solid var(--line-2); border-bottom
   display: grid; grid-template-columns: minmax(0, 1fr) 280px minmax(0, 1fr);
   gap: 14px; padding: 14px; align-items: start;
 }
+/* minmax(0, …): sin esto, un título largo ensancha la columna más allá de la pantalla */
+.console > * { min-width: 0; }
 @media (max-width: 1150px) {
-  .console { grid-template-columns: 1fr 1fr; }
+  .console { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .mixer { grid-column: 1 / -1; order: 3; }
 }
 @media (max-width: 720px) {
-  .console { grid-template-columns: 1fr; }
+  .console { grid-template-columns: minmax(0, 1fr); padding: 10px; }
+  .topbar { position: static; }
 }
 
 /* ---------- Bandejas ---------- */

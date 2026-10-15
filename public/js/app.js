@@ -7,7 +7,7 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 // Debe coincidir con APP_VERSION de proyeccion.js: así la consola detecta una proyección desactualizada.
-const APP_VERSION = '11';
+const APP_VERSION = '12';
 const PS = { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 };
 const DRAG_TRACK = 'application/x-djyt-track';
 const DRAG_INDEX = 'application/x-djyt-index';
@@ -16,8 +16,9 @@ const YT_ERRORS = {
   2: 'Enlace o ID de video no válido',
   5: 'El reproductor no pudo reproducir este video',
   100: 'Video no encontrado, privado o eliminado',
-  101: 'El dueño de este video no permite reproducirlo fuera de YouTube',
-  150: 'El dueño de este video no permite reproducirlo fuera de YouTube',
+  // YouTube usa el mismo código para videos bloqueados por su dueño y para videos que no existen
+  101: 'No se puede reproducir aquí: el dueño no permite usarlo fuera de YouTube, o el video no existe',
+  150: 'No se puede reproducir aquí: el dueño no permite usarlo fuera de YouTube, o el video no existe',
   153: 'YouTube rechazó la reproducción: abre la app desde su enlace web o con «Iniciar DJ YouTube.bat»',
 };
 const PLAYER_VARS = {
@@ -759,7 +760,7 @@ function automixTick() {
 
   // Cuando falta poco, cruzar (terminando justo antes de las miniaturas del final)
   const remain = live.duration - live.time();
-  if (live.duration > 0 && !live.loop.on && remain <= mixPoint() + 0.5) {
+  if (live.duration > 0 && !live.loop.on && remain <= mixPoint(live) + 0.5) {
     if (!other.track || other.err) {
       if (!automixEndNotified) toast('AutoMix: no hay más canciones en la lista');
       automixEndNotified = true;
@@ -772,10 +773,12 @@ function automixTick() {
 
 // Segundos antes del final en que empieza el cruce: el fundido termina justo donde
 // empieza el tramo oculto del video (las miniaturas de YouTube).
-const mixPoint = () => settings.fadeTime + (settings.hideTail || 0);
+// En videos cortos no se oculta el final: si no, se taparía casi todo el video.
+const tailFor = (d) => (settings.hideTail > 0 && d.duration > settings.hideTail + 30 ? settings.hideTail : 0);
+const mixPoint = (d) => settings.fadeTime + tailFor(d);
 
 function crossToNext(outgoing, incoming, remain) {
-  const seconds = clamp(remain - (settings.hideTail || 0), 1, settings.fadeTime);
+  const seconds = clamp(remain - tailFor(outgoing), 1, settings.fadeTime);
   autoFade(incoming.letter, seconds, () => outgoing.pause());
 }
 
@@ -792,7 +795,7 @@ function autoNextTick() {
 
   // Dejar lista la siguiente con tiempo (por si YouTube mete un anuncio al cargarla)
   const token = live.letter + live.loadToken;
-  if (remain <= mixPoint() + 45 && autoNextPrepared !== token) {
+  if (remain <= mixPoint(live) + 45 && autoNextPrepared !== token) {
     autoNextPrepared = token;
     if (!other.track || other.hasPlayed || other.err) {
       const next = nextTrack(live.track.id);
@@ -804,7 +807,7 @@ function autoNextTick() {
     if (next) other.load(next);
     return;
   }
-  if (remain <= mixPoint() + 0.5 && other.track && !other.preloading && !other.hasPlayed) {
+  if (remain <= mixPoint(live) + 0.5 && other.track && !other.preloading && !other.hasPlayed) {
     crossToNext(live, other, remain);
   }
 }
@@ -832,7 +835,7 @@ if (channel) {
 function videoOpacity() {
   // Una bandeja preparándose o en un anuncio no se muestra: se ve la otra o queda en negro.
   // Tampoco su tramo final, donde YouTube pone miniaturas de otros videos (pantalla final).
-  const inTail = (d) => settings.hideTail > 0 && d.duration > 0 && d.duration - d.time() < settings.hideTail;
+  const inTail = (d) => tailFor(d) > 0 && d.duration - d.time() < tailFor(d);
   const ok = (d) => !!(d.track && !d.err && d.state !== PS.ENDED && !d.preloading && !d.inAd && !inTail(d));
   const a = ok(decks.A), b = ok(decks.B);
   if (settings.videoMode === 'A') return [a ? 1 : 0, 0];
