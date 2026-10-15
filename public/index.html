@@ -8,7 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=12">
+  <link rel="stylesheet" href="css/style.css?v=13">
+  <link rel="stylesheet" href="css/dj.css?v=13">
 </head>
 <body>
   <div id="fileWarning" class="banner hidden">
@@ -70,6 +71,10 @@
         <input type="range" id="xfader" min="0" max="1000" value="0" title="Crossfader (doble clic: centrar)">
         <span class="x-b">B</span>
       </div>
+      <div class="phase idle" title="¿Caen juntos los golpes de A y B? El punto centrado = en fase. Necesita el BPM y el tiempo 1 de las dos canciones.">
+        <div class="phase-bar"><i id="phaseDot"></i></div>
+        <span id="phaseTxt">Fase —</span>
+      </div>
 
       <div class="mix-row">
         <label class="field">Curva
@@ -87,6 +92,13 @@
             <option value="12">12 s</option>
             <option value="16">16 s</option>
             <option value="24">24 s</option>
+          </select>
+        </label>
+        <label class="field" title="Velocidad de los cortes del efecto GATE">Gate
+          <select id="gateDiv" class="input">
+            <option value="4">1/4</option>
+            <option value="8">1/8</option>
+            <option value="16">1/16</option>
           </select>
         </label>
       </div>
@@ -127,7 +139,137 @@
     <div id="slotB"></div>
   </main>
 
+  <section class="extras panel">
+    <div class="tabs" id="extrasTabs">
+      <button data-pane="paneSampler">Sampler</button>
+      <button data-pane="paneMic">Micrófono</button>
+      <button data-pane="paneVfx">Efectos de video</button>
+      <button data-pane="paneCue">Audífonos</button>
+      <button data-pane="paneMidi">Controladora MIDI</button>
+    </div>
+
+    <div class="extras-pane" id="paneSampler">
+      <div class="pads" id="samplerPads"></div>
+      <div class="pane-row">
+        <label class="field inline">Volumen del sampler <input type="range" id="samplerVol" min="0" max="100"></label>
+        <span class="muted small-note">Teclas <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>G</kbd>.
+          Los sonidos de fábrica los genera la app; con «Cargar» pones uno tuyo.</span>
+      </div>
+      <input type="file" id="padFile" accept="audio/*" hidden>
+    </div>
+
+    <div class="extras-pane" id="paneMic" hidden>
+      <div class="pane-row">
+        <button id="micOn" class="btn">Encender micrófono</button>
+        <div class="mic-meter"><i id="micLevel"></i></div>
+        <span class="muted small-note">Tecla <kbd>M</kbd></span>
+      </div>
+      <div class="pane-grid">
+        <label class="check"><input type="checkbox" id="talkover"> Talkover: bajar la música mientras hablo</label>
+        <label class="check"><input type="checkbox" id="micMonitor"> Escuchar el micrófono por los parlantes</label>
+        <label class="field">Bajar la música al <input type="range" id="duckTo" min="0" max="80"></label>
+        <label class="field">Sensibilidad de la voz <input type="range" id="micSens" min="0" max="100"></label>
+        <label class="field">Volumen del micrófono <input type="range" id="micVol" min="0" max="100"></label>
+      </div>
+    </div>
+
+    <div class="extras-pane" id="paneVfx" hidden>
+      <div class="pane-grid">
+        <label class="field">Filtro de color
+          <select id="vfxFilter" class="input">
+            <option value="none">Ninguno</option>
+            <option value="bw">Blanco y negro</option>
+            <option value="sepia">Sepia</option>
+            <option value="invert">Negativo</option>
+            <option value="vivid">Colores intensos</option>
+            <option value="blur">Desenfoque</option>
+            <option value="rainbow">Arcoíris (cambia de color)</option>
+            <option value="noir">Contraste duro</option>
+          </select>
+        </label>
+        <label class="field">Transición entre A y B
+          <select id="vfxTransition" class="input">
+            <option value="fade">Fundido</option>
+            <option value="wipe">Cortina</option>
+            <option value="slide">Deslizar</option>
+          </select>
+        </label>
+        <label class="field">Zoom <span><input type="range" id="vfxZoom" min="100" max="160"> <b id="vfxZoomVal" class="mono">100%</b></span></label>
+        <label class="field">Estrobo cada
+          <select id="vfxStrobeDiv" class="input">
+            <option value="1">1 tiempo</option>
+            <option value="2">½ tiempo</option>
+            <option value="4">¼ tiempo</option>
+            <option value="0.25">1 compás</option>
+          </select>
+        </label>
+      </div>
+      <div class="pane-row vfx-buttons">
+        <button class="btn vfx-btn" id="vfx_strobe" title="Destellos blancos al ritmo (tecla J)">Estrobo</button>
+        <button class="btn vfx-btn" id="vfx_flash" title="Flash de color en cada golpe (tecla K)">Flash al ritmo</button>
+        <input type="color" id="vfxFlashColor" title="Color del flash">
+        <button class="btn vfx-btn" id="vfx_pulse" title="Zoom pequeño en cada golpe">Pulso</button>
+        <button class="btn vfx-btn" id="vfx_mirror" title="Voltear la imagen">Espejo</button>
+        <button class="btn small" id="vfxReset">Quitar efectos</button>
+      </div>
+      <div class="pane-grid">
+        <div class="field">Logo en pantalla
+          <span class="logo-row">
+            <label class="btn small">Elegir imagen<input type="file" id="logoFile" accept="image/*" hidden></label>
+            <img id="logoPreview" alt="Logo" hidden>
+            <button class="btn small danger" id="logoRemove" hidden>Quitar</button>
+          </span>
+        </div>
+        <label class="field">Posición del logo
+          <select id="vfxLogoPos" class="input">
+            <option value="tl">Arriba izquierda</option>
+            <option value="tr">Arriba derecha</option>
+            <option value="bl">Abajo izquierda</option>
+            <option value="br">Abajo derecha</option>
+            <option value="c">Centro</option>
+          </select>
+        </label>
+        <label class="field">Tamaño del logo <input type="range" id="vfxLogoSize" min="5" max="40"></label>
+        <label class="field">Texto que pasa <input id="vfxMarquee" class="input" maxlength="140" placeholder="Ej. ¡Feliz cumpleaños Ana! · Pide tu canción"></label>
+        <label class="field">Velocidad del texto <input type="range" id="vfxMarqueeSpeed" min="6" max="40"></label>
+      </div>
+      <p class="muted small-note">Los efectos al ritmo usan el BPM de la canción que se ve (márcalo con TAP; en los MP3 se detecta solo).
+        Las bandejas MP3 se ven en la proyección como un visualizador que reacciona a la música.</p>
+    </div>
+
+    <div class="extras-pane" id="paneCue" hidden>
+      <p class="muted small-note">La pre-escucha (botón <b>PFL</b> de cada bandeja) te deja oír una canción MP3 por los
+        audífonos sin que salga por los parlantes. Necesitas una segunda salida de audio (audífonos USB o Bluetooth,
+        o una tarjeta de sonido). Con videos de YouTube no es posible: su sonido siempre sale por la salida principal.</p>
+      <div class="pane-grid">
+        <label class="field">Salida de audífonos <select id="cueDevice" class="input"></select></label>
+        <label class="field">Volumen de audífonos <input type="range" id="cueVol" min="0" max="100"></label>
+      </div>
+      <div class="pane-row">
+        <button class="btn small" id="cueNames">Ver nombres de las salidas</button>
+        <button class="btn small" id="cueTest">Probar sonido en audífonos</button>
+      </div>
+    </div>
+
+    <div class="extras-pane" id="paneMidi" hidden>
+      <div class="pane-row">
+        <button class="btn accent" id="midiConnect">Conectar controladora</button>
+        <span id="midiStatus" class="pill">Sin conectar</span>
+        <button class="btn small danger" id="midiClear">Borrar asignaciones</button>
+      </div>
+      <p class="muted small-note">Pulsa <b>Aprender</b> en una acción y mueve el botón, fader o perilla de tu controladora (Chrome o Edge).</p>
+      <div class="midi-scroll"><table class="midi-table"><tbody id="midiTable"></tbody></table></div>
+    </div>
+  </section>
+
   <section class="library panel">
+    <div class="tabs" id="libTabs">
+      <button data-pane="tabList" class="on">Lista</button>
+      <button data-pane="tabQueue" id="tabBtnQueue">Cola (0)</button>
+      <button data-pane="tabHistory" id="tabBtnHistory">Historial (0)</button>
+    </div>
+
+    <div class="lib-pane" id="tabList">
     <div class="lib-head">
       <h3 class="panel-title">Lista</h3>
       <select id="plSelect" class="input" title="Lista activa"></select>
@@ -142,21 +284,54 @@
       <input id="addInput" class="input" autocomplete="off"
              placeholder="Pega enlaces de YouTube (canciones o listas) o escribe para buscar…">
       <button type="submit" class="btn accent">Agregar / Buscar</button>
+      <label class="btn" title="Agrega canciones de tu PC (MP3, WAV, M4A…). Con ellas tienes ecualizador, efectos, forma de onda y SYNC exacto. También puedes arrastrarlas aquí.">
+        + Mis MP3<input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.aac,.opus" multiple hidden>
+      </label>
       <button type="button" id="btnYtSearch" class="btn ghost" title="Busca en YouTube en otra pestaña para copiar enlaces">Abrir YouTube ↗</button>
     </form>
 
     <div id="results" class="results hidden"></div>
 
     <div class="list-tools">
-      <input id="filter" class="input" placeholder="Filtrar esta lista…">
+      <input id="filter" class="input" placeholder="Filtrar (título, tonalidad, etiquetas, notas)…">
+      <select id="sortBy" class="input" title="Ordenar lo que se ve (no cambia el orden de la lista)">
+        <option value="list">Orden de la lista</option>
+        <option value="title">Título A–Z</option>
+        <option value="bpm">BPM (menor a mayor)</option>
+        <option value="energy">Energía (más alta primero)</option>
+        <option value="key">Tonalidad (rueda Camelot)</option>
+      </select>
       <span id="listCount" class="muted"></span>
     </div>
     <ol id="trackList" class="tracks"></ol>
     <p id="emptyHint" class="empty">
       Tu lista está vacía. Pega arriba un enlace de YouTube (por ejemplo
       <code>https://www.youtube.com/watch?v=…</code>) o el enlace de una lista
-      (<code>https://www.youtube.com/playlist?list=…</code>) y pulsa <b>Agregar</b>.
+      (<code>https://www.youtube.com/playlist?list=…</code>) y pulsa <b>Agregar</b>, o agrega tus MP3.
     </p>
+    </div>
+
+    <div class="lib-pane" id="tabQueue" hidden>
+      <div class="lib-head">
+        <span class="muted">Lo que está en la cola suena antes que el resto de la lista (con «Siguiente», AutoMix y el paso automático).</span>
+        <span class="spacer"></span>
+        <button class="btn small danger" id="queueClear">Vaciar cola</button>
+      </div>
+      <ol id="queueList" class="tracks"></ol>
+      <p id="queueEmpty" class="empty">La cola está vacía. Usa <b>+Cola</b> en cualquier canción de la lista.</p>
+    </div>
+
+    <div class="lib-pane" id="tabHistory" hidden>
+      <div class="lib-head">
+        <span class="muted">Canciones que sonaron al aire más de 15 segundos.</span>
+        <span class="spacer"></span>
+        <button class="btn small" id="histTxt">Exportar texto</button>
+        <button class="btn small" id="histCsv">Exportar Excel (CSV)</button>
+        <button class="btn small danger" id="histClear">Borrar</button>
+      </div>
+      <ol id="historyList" class="history"></ol>
+      <p id="historyEmpty" class="empty">Todavía no ha sonado ninguna canción en esta sesión.</p>
+    </div>
   </section>
 
   <p class="foot muted">
@@ -172,15 +347,18 @@
           <div class="t-title"></div>
           <div class="t-author"></div>
         </div>
-        <button class="btn small b-next" title="Cargar la siguiente canción de la lista">Siguiente ⏭</button>
+        <span class="kind-badge"></span>
+        <button class="btn small b-next" title="Cargar la siguiente canción (primero la cola, luego la lista)">Siguiente ⏭</button>
       </div>
       <div class="video-wrap">
         <div class="yt"></div>
+        <canvas class="wave-zoom" hidden title="Forma de onda: arrastra para mover la canción · rueda del ratón: ajuste fino"></canvas>
         <div class="deck-msg" hidden></div>
         <div class="onair-badge">AL AIRE</div>
         <div class="deck-ad" hidden></div>
       </div>
       <div class="bar" title="Haz clic para saltar a ese punto">
+        <canvas class="wave-over" hidden></canvas>
         <div class="loop-zone" hidden></div>
         <div class="fill"></div>
         <div class="cue-mark" hidden></div>
@@ -188,6 +366,9 @@
       </div>
       <div class="times">
         <span class="t-elapsed">0:00</span>
+        <span class="beatbox" title="Tiempo del compás (1-2-3-4) y compás dentro de la frase. Usa el BPM y el «tiempo 1».">
+          <span class="leds"><i></i><i></i><i></i><i></i></span><span class="t-phrase">—</span>
+        </span>
         <span class="t-bpm">— BPM</span>
         <span class="t-remain">-0:00</span>
       </div>
@@ -201,6 +382,7 @@
         <span class="lbl">Hot cues</span>
         <div class="group">
           <button class="btn hc">1</button><button class="btn hc">2</button><button class="btn hc">3</button><button class="btn hc">4</button>
+          <button class="btn small q-btn" title="Quantize: cues, hot cues y loops caen exactos en el tiempo (para las dos bandejas)">Q</button>
         </div>
       </div>
       <div class="ctrl-row">
@@ -218,14 +400,78 @@
         <span class="lbl">Tempo</span>
         <div class="group">
           <button class="btn small t-down" title="Más lento">−</button>
-          <span class="t-rate">1.00×</span>
+          <span class="t-rate">+0%</span>
           <button class="btn small t-up" title="Más rápido">+</button>
-          <button class="btn small t-reset" title="Velocidad normal">1×</button>
-          <button class="btn small tap" title="Toca al ritmo (4 veces o más) para medir el BPM">TAP</button>
+          <button class="btn small t-reset" title="Velocidad normal">0%</button>
+          <button class="btn small tap" title="Toca al ritmo (4 veces o más) desde el tiempo 1 para medir el BPM">TAP</button>
+          <button class="btn small b-one" title="Marcar aquí el tiempo 1 del compás (para el contador y quantize)">1</button>
+          <button class="btn small b-sync" title="SYNC: iguala tempo y fase con la otra bandeja">SYNC</button>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <span class="lbl" title="YouTube: pasos de 5 %. MP3: continuo ±16 %">Pitch</span>
+        <div class="group grow">
+          <button class="btn small bend-down" title="Frenar un poco mientras lo mantienes (empatar golpes)">◀</button>
+          <input type="range" class="tempo-slider" value="0" title="Tempo">
+          <button class="btn small bend-up" title="Acelerar un poco mientras lo mantienes (empatar golpes)">▶</button>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <span class="lbl">FX mezcla</span>
+        <div class="group">
+          <button class="btn small mfx" data-fx="gate" title="Cortes de volumen al ritmo (pulsa otra vez para quitarlo)">GATE</button>
+          <button class="btn small mfx" data-fx="brake" title="Freno de tocadiscos y pausa">FRENO</button>
+          <button class="btn small mfx" data-fx="echo" title="Eco que se apaga en 4 tiempos y pausa la canción">ECHO OUT</button>
+        </div>
+      </div>
+      <div class="file-ctrls">
+        <div class="kn-wrap"><span class="kn-high"></span><label>AGUDOS</label></div>
+        <div class="kn-wrap"><span class="kn-mid"></span><label>MEDIOS</label></div>
+        <div class="kn-wrap"><span class="kn-low"></span><label>GRAVES</label></div>
+        <div class="kn-wrap"><span class="kn-filter"></span><label>FILTRO</label></div>
+        <div class="fx-box">
+          <select class="fx-type input" title="Efecto">
+            <option value="echo">Eco</option>
+            <option value="reverb">Reverb</option>
+            <option value="flanger">Flanger</option>
+          </select>
+          <div class="fx-row">
+            <span class="kn-fx" title="Cantidad de efecto"></span>
+            <button class="btn small fx-on" title="Activar el efecto">FX</button>
+          </div>
+        </div>
+        <div class="file-btns">
+          <button class="btn small pfl" title="Pre-escucha por audífonos (elige la salida en Extras → Audífonos)">PFL</button>
+          <button class="btn small keylock" title="Key lock: al cambiar el tempo no cambia el tono">KEY</button>
         </div>
       </div>
     </section>
   </template>
+
+  <dialog id="dlgTrack">
+    <form method="dialog">
+      <h2>Ficha de la canción</h2>
+      <p id="tiTitle" class="muted"></p>
+      <div class="pane-grid">
+        <label class="field">BPM <input id="tiBpm" class="input" inputmode="decimal" placeholder="Ej. 124"></label>
+        <label class="field">Tonalidad <select id="tiKey" class="input"></select></label>
+        <label class="field">Energía
+          <select id="tiEnergy" class="input">
+            <option value="">—</option><option value="1">1 · tranquila</option><option value="2">2</option>
+            <option value="3">3 · media</option><option value="4">4</option><option value="5">5 · a tope</option>
+          </select>
+        </label>
+        <label class="field">Etiquetas (separadas por comas) <input id="tiTags" class="input" placeholder="reggaetón, apertura, clásico"></label>
+      </div>
+      <label class="field block">Notas <textarea id="tiNotes" class="input" rows="3" placeholder="Ej. entrar en el coro, mezcla bien con…"></textarea></label>
+      <p class="muted small-note">Las tonalidades usan la rueda Camelot: combinan las que tienen el mismo número, el número vecino con la misma letra, o el mismo número con la otra letra.</p>
+      <div class="dlg-actions">
+        <span class="spacer"></span>
+        <button value="cancel" class="btn">Cancelar</button>
+        <button value="save" class="btn accent">Guardar</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="dlgSettings">
     <form method="dialog">
@@ -267,11 +513,19 @@
           <h4>Mezclador</h4>
           <p><kbd>←</kbd> <kbd>→</kbd> mover crossfader · <kbd>↓</kbd> centrar<br>
              <kbd>F</kbd> auto-fade · <kbd>N</kbd> pantalla negra</p>
+          <h4>Extras</h4>
+          <p>Sampler: <kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>V</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>G</kbd><br>
+             <kbd>M</kbd> micrófono · <kbd>J</kbd> estrobo · <kbd>K</kbd> flash al ritmo</p>
           <h4>Lista</h4>
           <p>Arrastra canciones a una bandeja o a otra posición de la lista.
              Doble clic carga la canción en la bandeja que no está al aire.</p>
         </div>
       </div>
+      <h4>YouTube y MP3</h4>
+      <p>Las bandejas reproducen videos de YouTube o tus propios archivos (<b>+ Mis MP3</b>). Con los MP3 tienes además
+         ecualizador, filtro, efectos, forma de onda, BPM automático, SYNC exacto y pre-escucha por audífonos;
+         YouTube no deja procesar su sonido. Para mezclar al ritmo: marca el BPM con <b>TAP</b> empezando en el
+         tiempo 1 (o pulsa <b>1</b> en el primer golpe del compás) y usa <b>SYNC</b> o el medidor de fase.</p>
       <h4>Proyectar el video</h4>
       <p>Pulsa <b>Abrir proyección</b>. Si tienes un segundo monitor o proyector conectado (modo «Extender»),
          la ventana se abre allí; si no, arrástrala a esa pantalla y haz doble clic para pantalla completa.
@@ -282,7 +536,16 @@
 
   <div id="toasts"></div>
 
-  <script src="js/app.js?v=12"></script>
+  <script src="js/idb.js?v=13"></script>
+  <script src="js/audio.js?v=13"></script>
+  <script src="js/beats.js?v=13"></script>
+  <script src="js/app.js?v=13"></script>
+  <script src="js/session.js?v=13"></script>
+  <script src="js/sampler.js?v=13"></script>
+  <script src="js/mic.js?v=13"></script>
+  <script src="js/midi.js?v=13"></script>
+  <script src="js/vfx.js?v=13"></script>
+  <script src="js/main.js?v=13"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

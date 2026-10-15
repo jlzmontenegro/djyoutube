@@ -1,0 +1,179 @@
+/* =====================================================================
+   Funciones DJ avanzadas: bandejas MP3, beatgrid, SYNC, efectos, extras.
+   Misma regla que style.css: interfaz neutra; color solo en controles de música.
+   ===================================================================== */
+:root {
+  --c-eq: #a3e635;
+  --c-filter: #22d3ee;
+  --c-mfx: #fda4af;
+  --c-fxu: #f0abfc;
+}
+.mono { font-family: var(--mono); }
+.small-note { font-size: 12px; }
+
+/* Tipo de bandeja y forma de onda */
+.kind-badge { flex: none; font: 700 10px/1 var(--mono); letter-spacing: .08em; color: var(--muted); border: 1px solid var(--line-2); border-radius: 5px; padding: 4px 6px; }
+.kind-badge:empty { display: none; }
+.deck.is-file .kind-badge { color: var(--text); }
+.wave-zoom { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.wave-zoom:active { cursor: grabbing; }
+.deck.is-file .video-wrap iframe { visibility: hidden; }
+.deck.is-file .video-wrap::after { content: none !important; }
+.wave-over { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Contador de tiempos */
+.times { align-items: center; }
+.beatbox { display: inline-flex; align-items: center; gap: 8px; }
+.leds { display: inline-flex; gap: 3px; }
+.leds i { width: 9px; height: 9px; border-radius: 2px; background: var(--panel-3); border: 1px solid var(--line-2); }
+.leds i.on { background: var(--text-2); border-color: var(--text-2); }
+.leds i.one.on { background: var(--c-cue); border-color: var(--c-cue); box-shadow: 0 0 6px var(--c-cue); }
+.t-phrase { font-size: 11px; color: var(--muted); min-width: 74px; }
+
+/* Tempo, SYNC, pitch bend, quantize */
+.btn.b-one, .btn.b-sync, .btn.bend-down, .btn.bend-up {
+  --tone: var(--c-tempo); color: var(--tone);
+  border-color: color-mix(in srgb, var(--tone) 35%, var(--line)); background: color-mix(in srgb, var(--tone) 6%, var(--panel-2));
+}
+.btn.b-sync.on { background: var(--c-tempo); border-color: var(--c-tempo); color: #06121f; box-shadow: 0 0 14px -4px var(--c-tempo); }
+.btn.q-btn { font-family: var(--mono); color: var(--muted); }
+.btn.q-btn.on { background: var(--c-cue); border-color: var(--c-cue); color: #1a1203; }
+.group.grow { flex: 1; flex-wrap: nowrap; }
+.tempo-slider { flex: 1; min-width: 80px; accent-color: var(--c-tempo); cursor: pointer; }
+
+/* Efectos de mezcla */
+.btn.mfx {
+  --tone: var(--c-mfx); color: var(--tone); font-weight: 800; letter-spacing: .03em;
+  border-color: color-mix(in srgb, var(--tone) 35%, var(--line)); background: color-mix(in srgb, var(--tone) 6%, var(--panel-2));
+}
+.btn.mfx:hover { border-color: color-mix(in srgb, var(--tone) 70%, var(--line)); }
+.btn.mfx.on { background: var(--c-mfx); color: #1f0a0d; border-color: var(--c-mfx); animation: pulse .5s infinite; }
+
+/* EQ, filtro y efectos (bandejas MP3) */
+.file-ctrls {
+  display: grid; grid-template-columns: repeat(4, auto) minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  padding: 10px; background: #0f1012; border: 1px solid var(--line); border-radius: 10px;
+}
+.file-ctrls.disabled { opacity: .38; }
+.file-ctrls.disabled .knob { cursor: not-allowed; }
+.kn-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.kn-wrap label { font-size: 9px; font-weight: 800; letter-spacing: .1em; color: var(--muted); }
+.knob {
+  --tone: var(--c-eq); position: relative; display: block; width: 40px; height: 40px; border-radius: 50%;
+  cursor: ns-resize; touch-action: none; outline: none;
+  background: radial-gradient(circle at 50% 40%, #33363d, #1a1c20 70%); border: 1px solid var(--line-2); box-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+.knob:focus-visible { outline: 2px solid var(--text-2); outline-offset: 2px; }
+.knob-dial { position: absolute; inset: 0; display: block; }
+.knob-dial i { position: absolute; left: 50%; top: 4px; width: 3px; height: 30%; margin-left: -1.5px; border-radius: 2px; background: var(--text-2); }
+.knob.off-center { box-shadow: 0 0 0 2px color-mix(in srgb, var(--tone) 60%, transparent), 0 2px 6px rgba(0,0,0,.5); }
+.knob.off-center .knob-dial i { background: var(--tone); }
+.kn-filter.knob { --tone: var(--c-filter); }
+.kn-fx.knob { --tone: var(--c-fxu); width: 34px; height: 34px; }
+.fx-box { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fx-box .input { padding: 4px 6px; font-size: 12px; }
+.fx-row { display: flex; align-items: center; gap: 8px; }
+.btn.fx-on { color: var(--c-fxu); border-color: color-mix(in srgb, var(--c-fxu) 35%, var(--line)); }
+.btn.fx-on.on { background: var(--c-fxu); color: #1c0a1f; border-color: var(--c-fxu); }
+.file-btns { display: flex; flex-direction: column; gap: 6px; }
+.btn.pfl { color: var(--c-cue); border-color: color-mix(in srgb, var(--c-cue) 35%, var(--line)); }
+.btn.pfl.on { background: var(--c-cue); color: #1a1203; border-color: var(--c-cue); }
+.btn.keylock { color: var(--c-tempo); border-color: color-mix(in srgb, var(--c-tempo) 35%, var(--line)); }
+.btn.keylock.on { background: color-mix(in srgb, var(--c-tempo) 22%, var(--panel-2)); }
+@media (max-width: 720px) {
+  .file-ctrls { grid-template-columns: repeat(4, 1fr); }
+  .fx-box, .file-btns { grid-column: span 2; }
+  .file-btns { flex-direction: row; }
+}
+
+/* Medidor de fase */
+.phase { display: flex; align-items: center; gap: 8px; font: 600 11px var(--mono); color: var(--text-2); }
+.phase.idle { color: var(--muted); }
+.phase-bar { position: relative; flex: 1; height: 10px; border-radius: 5px; background: #0f1012; border: 1px solid var(--line); }
+.phase-bar::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--line-2); }
+#phaseDot { position: absolute; top: 1px; left: 50%; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--c-tempo); transition: left .1s linear; }
+#phaseDot.ok { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+.phase.idle #phaseDot { background: var(--line-2); }
+#phaseTxt { min-width: 118px; text-align: right; }
+.mix-row:has(#gateDiv) { grid-template-columns: 1fr 1fr 1fr; }
+
+/* Pestañas */
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin: -4px -4px 4px; padding: 0 4px; }
+.tabs button { background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; font-weight: 700; color: var(--muted); }
+.tabs button:hover { color: var(--text); }
+.tabs button.on { color: var(--white); border-bottom-color: var(--white); }
+.lib-pane { display: flex; flex-direction: column; gap: 10px; }
+
+/* Extras */
+.extras { margin: 0 14px 14px; display: flex; flex-direction: column; gap: 12px; }
+.pane-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pane-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; align-items: end; margin: 6px 0; }
+.field.inline { flex-direction: row; align-items: center; gap: 10px; }
+.field input[type=range] { width: 100%; accent-color: #d4d4d8; }
+.field.inline input[type=range] { width: 160px; }
+
+/* Pads del sampler */
+.pads { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 900px) { .pads { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.pad {
+  --tone: #f87171; position: relative; height: 78px; border-radius: 10px; cursor: pointer; user-select: none; touch-action: manipulation;
+  display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; overflow: hidden;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 22%, var(--panel-2)), color-mix(in srgb, var(--tone) 8%, var(--panel-2)));
+  border: 1px solid color-mix(in srgb, var(--tone) 45%, var(--line)); transition: transform .05s, box-shadow .1s;
+}
+.pad:nth-child(2) { --tone: #fb923c; }
+.pad:nth-child(3) { --tone: #facc15; }
+.pad:nth-child(4) { --tone: #a3e635; }
+.pad:nth-child(5) { --tone: #2dd4bf; }
+.pad:nth-child(6) { --tone: #60a5fa; }
+.pad:nth-child(7) { --tone: #a78bfa; }
+.pad:nth-child(8) { --tone: #f472b6; }
+.pad:hover { border-color: var(--tone); }
+.pad.hit { transform: scale(.97); background: var(--tone); box-shadow: 0 0 22px -4px var(--tone); }
+.pad.hit .pad-name, .pad.hit .pad-key { color: #0b0b0c; }
+.pad-key { position: absolute; top: 6px; left: 8px; font: 700 11px var(--mono); color: var(--tone); }
+.pad-name { font-weight: 800; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pad.custom .pad-name { font-style: italic; }
+.pad-tools { position: absolute; top: 4px; right: 4px; display: flex; gap: 3px; opacity: 0; transition: opacity .1s; }
+.pad:hover .pad-tools, .pad:focus-within .pad-tools { opacity: 1; }
+.pad-tools button { font: 600 10px var(--font); padding: 2px 5px; border-radius: 5px; border: 1px solid var(--line-2); background: rgba(0,0,0,.6); color: var(--text); cursor: pointer; }
+
+/* Micrófono */
+.mic-meter { width: 180px; height: 8px; border-radius: 4px; background: #0f1012; border: 1px solid var(--line); overflow: hidden; }
+#micLevel { display: block; height: 100%; width: 0; background: var(--text-2); transition: width .05s; }
+#micLevel.talk { background: var(--ok); }
+#micOn.on { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+
+/* Efectos de video */
+.vfx-buttons { margin: 4px 0; }
+.btn.vfx-btn.on { background: var(--white); color: #111214; border-color: var(--white); }
+#vfxFlashColor { width: 38px; height: 34px; padding: 2px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; }
+.logo-row { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; }
+#logoPreview { height: 34px; max-width: 90px; object-fit: contain; border-radius: 6px; background: repeating-conic-gradient(#222 0 25%, #2c2c2c 0 50%) 0 0 / 12px 12px; }
+
+/* MIDI */
+.midi-scroll { max-height: 320px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+.midi-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.midi-table td { padding: 6px 10px; border-bottom: 1px solid var(--line); }
+.midi-table td:last-child { text-align: right; white-space: nowrap; }
+.midi-table tr.learning td { background: color-mix(in srgb, var(--c-cue) 12%, transparent); }
+.midi-table .mono { color: var(--muted); font-size: 12px; }
+
+/* Lista: fichas, cola, historial */
+.chips { display: inline-flex; gap: 4px; margin-left: 6px; vertical-align: 1px; }
+.chip { font: 600 10px/1.6 var(--mono); padding: 0 5px; border-radius: 4px; background: var(--panel-3); color: var(--text-2); }
+.chip.tag { background: transparent; border: 1px solid var(--line-2); }
+.badge.q { background: transparent; color: var(--text); border: 1px solid var(--line-2); }
+.list-tools select { max-width: 230px; }
+.library.drop { outline: 2px dashed var(--text-2); outline-offset: -6px; }
+.history { list-style: none; margin: 0; padding: 0; max-height: 52vh; overflow: auto; }
+.hist { display: grid; grid-template-columns: 56px minmax(0, 2fr) minmax(0, 1fr); gap: 12px; padding: 6px 8px; border-radius: 8px; }
+.hist:nth-child(odd) { background: var(--panel-2); }
+.h-time { font: 600 12px var(--mono); color: var(--muted); }
+.h-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-author { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+textarea.input { resize: vertical; font: inherit; color: var(--text); }
+@media (max-width: 720px) {
+  .extras { margin: 0 10px 10px; }
+  .acts { flex-wrap: wrap; }
+}

@@ -1,69 +1,73 @@
 # DJ YouTube
 
-Consola de DJ sencilla que usa videos de YouTube: dos bandejas, mezclador con crossfader,
-listas de canciones y una ventana de proyección para mostrar el video en otra pantalla del mismo PC.
+Consola de DJ con dos bandejas que reproducen **videos de YouTube** o **tus propios archivos de música**,
+mezclador, sampler, micrófono, efectos de video y una ventana de proyección para otra pantalla del mismo PC.
 
-## Cómo abrirlo
-
-1. Necesitas **Node.js** (ya está instalado en este PC) y conexión a internet.
-2. Haz doble clic en **`Iniciar DJ YouTube.bat`**. Se abre el navegador en `http://localhost:8090`.
-3. Deja abierta la ventana negra mientras pinchas. Para salir, ciérrala.
-
-Usa **Chrome o Edge**: con ellos la proyección puede abrirse directamente en el segundo monitor.
+En línea: **https://jlzmontenegro.github.io/djyoutube/** (o, en local, con `Iniciar DJ YouTube.bat`).
+Usa **Chrome o Edge**.
 
 ## Uso básico
 
-- **Agregar canciones:** pega uno o varios enlaces de YouTube en la barra y pulsa *Agregar*.
-  Para traer una lista completa, pega su enlace (`youtube.com/playlist?list=…`).
-- **Buscar:** con una clave de la API de YouTube (⚙ Ajustes) puedes escribir y buscar dentro de la app.
-  Sin clave, usa *Abrir YouTube ↗*, busca y copia el enlace.
-- **Cargar en una bandeja:** botones **A** / **B** de cada canción, arrastrarla a la bandeja,
-  o doble clic (la carga en la bandeja que no está al aire).
-- **Bandejas:** Play/Pausa, CUE (estilo CDJ), saltos de ±5 s, 4 hot cues, loop IN/OUT,
-  loops de 4/8/16 tiempos (después de medir el BPM con TAP) y velocidad (tempo).
-  Los cues, hot cues y BPM se guardan por canción.
-- **Mezclador:** volumen de A, B y master, crossfader con 3 curvas, *Auto-fade* y *AutoMix*
-  (mezcla sola la lista con el tiempo de fundido elegido).
-- **Medidores de nivel (verde/amarillo/rojo):** por defecto muestran el volumen que envía cada bandeja
-  (y laten al BPM si lo marcaste con TAP). Con **Medir audio real** el navegador te pide compartir
-  «Esta pestaña» con su audio: entonces el master mide el sonido de verdad y A/B lo reparten según sus faders.
+- **Agregar canciones:** pega enlaces de YouTube (videos o listas) y pulsa *Agregar*, o pulsa
+  **+ Mis MP3** (también puedes arrastrar los archivos a la lista o a una bandeja).
+  Tus MP3 se guardan en este navegador.
+- **Buscar:** con una clave de la API de YouTube (*Ajustes*) buscas dentro de la app; sin clave, usa *Abrir YouTube ↗*.
+- **Cargar:** botones **A** / **B**, arrastrar a la bandeja, o doble clic (va a la bandeja que no está al aire).
+- **Cola, historial y ficha:** *+Cola* pone una canción a sonar después; la pestaña *Historial* guarda lo que
+  sonó (exportable a texto o Excel); **✎** abre la ficha (BPM, tonalidad Camelot, energía, etiquetas, notas)
+  para filtrar y ordenar la lista.
 
-## Proyectar el video
+## Bandejas
 
-1. Conecta el proyector o la segunda pantalla en modo **Extender** (Windows + P → Extender).
-2. Pulsa **📺 Abrir proyección**. La primera vez el navegador puede pedir permiso para
-   «administrar ventanas en todas las pantallas»: acéptalo y la ventana se abrirá en la otra pantalla.
-   Si no, arrástrala tú.
-3. Haz **doble clic** en la ventana de proyección (o pulsa **F**) para pantalla completa.
+- Play/Pausa, CUE (estilo CDJ), ±5 s, 4 hot cues, loops IN/OUT y de 4/8/16 tiempos.
+- **Tiempos y compases:** con el BPM (TAP, o automático en los MP3) y el **tiempo 1** (botón *1*), cada bandeja
+  muestra 1-2-3-4 y el compás de la frase. **Q** (quantize) hace que cues, hot cues y loops caigan exactos en el tiempo.
+- **Tempo:** YouTube en pasos de 5 %; MP3 continuo ±16 % con *key lock* (sin cambiar el tono).
+  ◀ ▶ frenan/aceleran un poco mientras los mantienes, para empatar golpes a mano.
+- **SYNC:** iguala tempo y fase con la otra bandeja. Con MP3 es exacto; con YouTube tarda unos segundos
+  y mantiene los golpes a pocos milisegundos alternando entre dos velocidades.
+- **FX de mezcla:** GATE (cortes al ritmo), FRENO (de tocadiscos) y ECHO OUT (eco que se apaga y pausa).
+- **Solo con MP3** (YouTube no deja procesar su audio): ecualizador de 3 bandas, filtro, eco/reverb/flanger,
+  forma de onda (arrástrala para mover la canción), BPM automático y **PFL** (pre-escucha por audífonos).
 
-El video sigue al crossfader (o elige *Solo A* / *Solo B*). También puedes poner la pantalla en negro,
-un texto fijo (tu nombre de DJ), mostrar el nombre de cada canción al entrar, activar o quitar los
-subtítulos (CC) y ocultar el final de cada video, donde YouTube pone miniaturas.
-Para Zoom, Meet u OBS, comparte la ventana de proyección. **El sonido sale de la consola**, no de la proyección.
+## Mezclador
+
+Volumen de A, B y master con **medidores** (nivel real en los MP3), crossfader con 3 curvas, **medidor de fase**,
+*Auto-fade*, *AutoMix* y el paso automático a la siguiente canción justo antes de las miniaturas de YouTube.
+
+## Extras
+
+- **Sampler:** 8 pads (bocina, sirena, láser, subida, impacto, bombo, palmas, rebobinar), generados por la app;
+  cada pad puede cargar un sonido tuyo.
+- **Micrófono:** con *talkover*, la música baja sola mientras hablas.
+- **Efectos de video:** filtros, espejo, zoom, estrobo y flash al ritmo, pulso, transición fundido/cortina/deslizar,
+  logo y texto que pasa. Las bandejas MP3 se ven como un visualizador que reacciona a la música.
+- **Audífonos:** elige la salida para la pre-escucha (PFL) de los MP3.
+- **Controladora MIDI:** pulsa *Aprender* y mueve el control de tu controladora (cualquier marca).
+
+## Proyectar
+
+1. Conecta el proyector en modo **Extender** (Windows + P).
+2. Pulsa **Abrir proyección** y haz doble clic en ella (o tecla **F**) para pantalla completa.
+
+El sonido sale de la consola, no de la proyección. Para Zoom/Meet/OBS comparte la ventana de proyección.
 
 ## Atajos de teclado
 
 | Tecla | Acción |
 |---|---|
-| Q / W | Play-pausa / CUE de la bandeja A |
-| P / O | Play-pausa / CUE de la bandeja B |
-| 1–4 / 7–0 | Hot cues de A / B (Mayús + número: borrar) |
+| Q / W · P / O | Play-pausa / CUE de A · de B |
+| 1–4 · 7–0 | Hot cues de A · de B (Mayús + número: borrar) |
 | ← → / ↓ | Mover / centrar el crossfader |
-| F | Auto-fade |
-| N | Pantalla negra |
+| F · N | Auto-fade · Pantalla negra |
+| Z X C V A S D G | Pads del sampler |
+| M · J · K | Micrófono · Estrobo · Flash al ritmo |
 
-## Limitaciones (por el reproductor de YouTube)
+## Limitaciones de YouTube
 
-- Se reproduce con el reproductor oficial, así que YouTube puede poner **anuncios**. La app no los
-  bloquea, pero evita que lleguen a la pista: la canción que preparas en la otra bandeja pasa su anuncio
-  en silencio antes de quedar lista; AutoMix no cruza a una bandeja que siga en un anuncio; y en la
-  proyección se oculta cualquier video que esté en un anuncio. Para no tener anuncios de ningún tipo,
-  usa **YouTube Premium** con tu cuenta abierta en youtube.com en el mismo navegador.
-- Las **miniaturas del final** (pantalla final de YouTube) no se pueden quitar del reproductor. La opción
-  *Ocultar final del video* (20 s por defecto) oculta ese tramo en la proyección. Con la casilla
-  *Pasar sola a la siguiente antes de las miniaturas* (o con AutoMix), la siguiente canción de la lista
-  entra con un fundido que termina justo donde empieza ese tramo, así nunca se ven las miniaturas.
-- Algunos videos **no permiten** reproducirse fuera de YouTube (salen marcados como *NO DISPONIBLE*).
-- No hay ecualizador, filtros ni forma de onda: YouTube no deja procesar su audio.
-- La velocidad solo va en pasos (0.25×, 0.5×, 0.75×, 1×, 1.25×…); los loops cortos pueden sonar con un pequeño corte.
-- Las listas se guardan en el navegador. Usa *Exportar* para hacer copia o pasarlas a otro PC.
+- Puede poner **anuncios**: la app no los bloquea, pero los hace pasar en silencio al preparar la siguiente
+  canción y los oculta en la proyección. Sin anuncios: **YouTube Premium** con tu cuenta abierta en el navegador.
+- Las **miniaturas del final** no se pueden quitar: la proyección oculta ese tramo y la siguiente canción entra antes.
+- Algunos videos **no permiten** reproducirse fuera de YouTube (salen como *NO DISPONIBLE*).
+- Sin ecualizador, efectos de audio, forma de onda ni pre-escucha en las bandejas de YouTube: para eso usa MP3.
+- Las listas y tus MP3 se guardan en el navegador: usa *Exportar* para copiar las listas a otro PC.

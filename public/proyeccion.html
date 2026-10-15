@@ -13,10 +13,31 @@
       font-family: "Manrope", system-ui, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
     body.idle { cursor: none; }
     [hidden] { display: none !important; }
-    .layer { position: fixed; inset: 0; opacity: 0; transition: opacity .5s linear; }
+    #stage { position: fixed; inset: 0; overflow: hidden; transform-origin: 50% 50%; }
+    .layer { position: absolute; inset: 0; opacity: 0; transition: opacity .5s linear; background: #000; }
     .layer iframe { width: 100%; height: 100%; border: 0; pointer-events: none; }
+    .layer.file iframe { visibility: hidden; }
+    .viz { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+    .layer.file .viz { display: block; }
+    .viz-title { position: absolute; left: 0; right: 0; top: 40%; text-align: center; display: none;
+      font-weight: 800; font-size: clamp(22px, 4.5vw, 84px); letter-spacing: -.01em; text-shadow: 0 4px 30px rgba(0,0,0,.8); padding: 0 6vw; }
+    .layer.file .viz-title { display: block; }
+    #stage.wipe .layer, #stage.slide .layer { transition: none; }
     #layerA { z-index: 1; }
     #layerB { z-index: 2; }
+    #flash, #strobe { position: fixed; inset: 0; z-index: 4; pointer-events: none; opacity: 0; }
+    #strobe { background: #fff; }
+    #logo { position: fixed; z-index: 6; pointer-events: none; filter: drop-shadow(0 4px 18px rgba(0,0,0,.6)); }
+    #logo.tl { top: 3vh; left: 3vw; } #logo.tr { top: 3vh; right: 3vw; }
+    #logo.bl { bottom: 4vh; left: 3vw; } #logo.br { bottom: 4vh; right: 3vw; }
+    #logo.c { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    #marquee { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; overflow: hidden; white-space: nowrap;
+      background: rgba(0,0,0,.6); font-weight: 800; font-size: clamp(16px, 2.6vw, 48px); padding: .35em 0; }
+    #marquee span { display: inline-block; padding-left: 100%; animation: marquee linear infinite; }
+    @keyframes marquee { to { transform: translateX(-100%); } }
+    @keyframes hue { to { filter: hue-rotate(360deg) saturate(1.6); } }
+    #stage.rainbow { animation: hue 6s linear infinite; }
+    body.black #logo, body.black #marquee { visibility: hidden; }
     #overlayText { position: fixed; top: 3vh; right: 3vw; z-index: 5; font-weight: 800;
       font-size: clamp(18px, 3.2vw, 60px); letter-spacing: .02em; text-shadow: 0 2px 14px rgba(0,0,0,.85); }
     #nowPlaying { position: fixed; left: 3vw; bottom: 6vh; z-index: 5; max-width: 70vw; padding: 1.2vh 1.6vw;
@@ -45,8 +66,14 @@
   </style>
 </head>
 <body>
-  <div id="layerA" class="layer"><div></div></div>
-  <div id="layerB" class="layer"><div></div></div>
+  <div id="stage">
+    <div id="layerA" class="layer"><div></div><canvas class="viz"></canvas><div class="viz-title"></div></div>
+    <div id="layerB" class="layer"><div></div><canvas class="viz"></canvas><div class="viz-title"></div></div>
+  </div>
+  <div id="flash"></div>
+  <div id="strobe"></div>
+  <img id="logo" alt="" hidden>
+  <div id="marquee" hidden><span></span></div>
   <div id="overlayText"></div>
   <div id="nowPlaying"><div id="npTitle"></div><div id="npAuthor"></div></div>
   <div id="hint" hidden>
@@ -62,7 +89,7 @@
       <p id="status">Esperando la consola de DJ…</p>
     </div>
   </div>
-  <script src="js/proyeccion.js?v=12"></script>
+  <script src="js/proyeccion.js?v=13"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

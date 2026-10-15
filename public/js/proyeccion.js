@@ -3,7 +3,7 @@
    Muestra en silencio los mismos videos que las bandejas de la consola y los mantiene sincronizados. */
 
 // Debe coincidir con APP_VERSION de app.js: así la consola detecta una proyección desactualizada.
-const APP_VERSION = '12';
+const APP_VERSION = '13';
 const PS = { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3 };
 const channel = new BroadcastChannel('djyoutube');
 const layers = { A: document.getElementById('layerA'), B: document.getElementById('layerB') };
@@ -65,8 +65,11 @@ window.onYouTubeIframeAPIReady = () => {
 };
 
 channel.onmessage = (e) => {
-  if (e.data?.type !== 'state') return;
-  last = e.data;
+  const m = e.data;
+  if (m?.type === 'spec') { spectrum.A = m.A; spectrum.B = m.B; spectrum.at = performance.now(); return; }
+  if (m?.type === 'logo') { setLogo(m.data); return; }
+  if (m?.type !== 'state') return;
+  last = m;
   lastMsgAt = Date.now();
   apply(last);
 };
@@ -85,16 +88,46 @@ function apply(s) {
     const d = decks[k];
     if (!captionsOn && d.videoId && Date.now() - (d.capsAt || 0) > 1000) applyCaptions(d, true);
   }
+  // Bandejas con MP3: en vez de video se ve un visualizador con el nombre de la canción
+  for (const k of ['A', 'B']) {
+    const st = s.decks[k];
+    layers[k].classList.toggle('file', !!st?.file);
+    layers[k].querySelector('.viz-title').textContent = st?.file ? st.title : '';
+  }
   // Una capa preparándose o detenida en un anuncio no se muestra en la pantalla
-  const hidden = (k) => s.blackout || decks[k].warming || decks[k].stuck;
+  const hidden = (k) => s.blackout || (!s.decks[k]?.file && (decks[k].warming || decks[k].stuck));
   const oa = hidden('A') ? 0 : s.opacity.A;
   let ob = hidden('B') ? 0 : s.opacity.B;
   if (!oa && ob > 0) ob = 1;
-  layers.A.style.opacity = oa;
-  layers.B.style.opacity = ob;
+  applyTransition(s.vfx?.transition || 'fade', oa, ob);
   document.body.classList.toggle('black', !!s.blackout);
   document.getElementById('overlayText').textContent = s.overlayText || '';
+  applyVfxSettings(s.vfx);
   showTitle(s);
+}
+
+// Fundido: la capa B se superpone con transparencia. Cortina: B entra desde la derecha
+// tapando a A. Deslizar: B empuja a A hacia la izquierda.
+function applyTransition(kind, oa, ob) {
+  const stage = document.getElementById('stage');
+  stage.classList.toggle('wipe', kind === 'wipe');
+  stage.classList.toggle('slide', kind === 'slide');
+  const A = layers.A.style, B = layers.B.style;
+  if (kind === 'fade' || !oa || !ob) {
+    A.opacity = oa; B.opacity = ob;
+    A.clipPath = B.clipPath = A.transform = B.transform = '';
+    return;
+  }
+  A.opacity = 1;
+  B.opacity = 1;
+  if (kind === 'wipe') {
+    A.transform = B.transform = '';
+    B.clipPath = `inset(0 0 0 ${(1 - ob) * 100}%)`;
+  } else {
+    B.clipPath = '';
+    A.transform = `translateX(${-ob * 100}%)`;
+    B.transform = `translateX(${(1 - ob) * 100}%)`;
+  }
 }
 
 function syncDeck(k, st, sentAt) {
@@ -153,7 +186,8 @@ function syncDeck(k, st, sentAt) {
 function showTitle(s) {
   const np = document.getElementById('nowPlaying');
   const front = s.decks[s.front];
-  const key = s.showTitle && front?.videoId && front.playing ? front.videoId : '';
+  const id = front?.videoId || (front?.file ? 'file:' + front.title : '');
+  const key = s.showTitle && id && front.playing ? id : '';
   if (key === shownTitleKey) return;
   shownTitleKey = key;
   clearTimeout(titleTimer);
@@ -227,3 +261,122 @@ setInterval(() => {
   statusEl.textContent = connected ? '● Conectada a la consola' : 'Esperando la consola de DJ… (déjala abierta)';
   statusEl.classList.toggle('on', connected);
 }, 1000);
+
+// =====================================================================
+// Efectos de video (VJ) y visualizador de las bandejas MP3
+// =====================================================================
+const spectrum = { A: null, B: null, at: 0 };
+const smooth = { A: new Float32Array(32), B: new Float32Array(32) };
+const stage = document.getElementById('stage');
+const flashEl = document.getElementById('flash');
+const strobeEl = document.getElementById('strobe');
+const logoEl = document.getElementById('logo');
+const marqueeEl = document.getElementById('marquee');
+let vfx = {};
+
+const FILTERS = {
+  none: '', bw: 'grayscale(1) contrast(1.1)', sepia: 'sepia(.9) contrast(1.05)', invert: 'invert(1) hue-rotate(180deg)',
+  vivid: 'saturate(2.2) contrast(1.15)', blur: 'blur(6px) brightness(1.1)', noir: 'grayscale(1) contrast(2.2) brightness(.9)', rainbow: '',
+};
+
+function setLogo(data) {
+  logoEl.hidden = !data;
+  if (data) logoEl.src = data; else logoEl.removeAttribute('src');
+}
+
+function applyVfxSettings(v = {}) {
+  vfx = v;
+  stage.style.filter = FILTERS[v.filter] ?? '';
+  stage.classList.toggle('rainbow', v.filter === 'rainbow');
+  logoEl.className = v.logoPos || 'tr';
+  logoEl.style.width = `${v.logoSize || 14}vw`;
+  const text = (v.marquee || '').trim();
+  marqueeEl.hidden = !text;
+  const span = marqueeEl.firstElementChild;
+  if (span.textContent !== text) span.textContent = text;
+  span.style.animationDuration = `${Math.max(4, (text.length + 40) / (v.marqueeSpeed || 18) * 2)}s`;
+  // Un logo abajo no debe quedar tapado por la franja del texto que pasa
+  logoEl.style.bottom = text && /^b/.test(v.logoPos || '') ? `calc(${marqueeEl.offsetHeight}px + 2vh)` : '';
+  // El espejo voltea la imagen, pero el nombre de la canción se sigue leyendo al derecho
+  document.querySelectorAll('.viz-title').forEach((el) => { el.style.transform = v.mirror ? 'scaleX(-1)' : ''; });
+}
+
+// Tiempos (con decimales) de la canción al frente, avanzando con el reloj entre mensajes
+function currentBeats() {
+  const b = last?.beat;
+  if (!b || !b.bpm) return null;
+  const elapsed = b.playing ? (Date.now() - last.sentAt) / 60000 * b.bpm : 0;
+  return b.beats + elapsed;
+}
+
+function renderVfx() {
+  const beats = currentBeats();
+  const playing = !!last?.beat?.playing;
+  const frac = (x) => x - Math.floor(x);
+  const black = !!last?.blackout;
+
+  // Estrobo: destello blanco corto en cada fracción de tiempo elegida
+  let strobe = 0;
+  if (vfx.strobe && !black) {
+    const div = vfx.strobeDiv || 1;
+    const phase = beats != null ? frac(beats * div) : frac(performance.now() / 1000 * 2 * div);
+    strobe = phase < 0.12 ? 1 : 0;
+  }
+  strobeEl.style.opacity = strobe;
+
+  // Flash de color que se apaga en cada golpe
+  let flash = 0;
+  if (vfx.flash && !black && beats != null && playing) flash = Math.exp(-frac(beats) * 6) * 0.55;
+  flashEl.style.opacity = flash;
+  flashEl.style.background = vfx.flashColor || '#ffffff';
+
+  // Espejo, zoom y pulso en cada golpe
+  let scale = (vfx.zoom || 100) / 100;
+  if (vfx.pulse && beats != null && playing) scale *= 1 + 0.045 * Math.exp(-frac(beats) * 5);
+  stage.style.transform = `scale(${vfx.mirror ? -scale : scale}, ${scale})`;
+
+  drawViz('A');
+  drawViz('B');
+  requestAnimationFrame(renderVfx);
+}
+
+// Visualizador: barras simétricas desde el centro, con brillo que sigue a los graves
+function drawViz(k) {
+  const layer = layers[k];
+  if (!layer.classList.contains('file') || layer.style.opacity === '0') return;
+  const c = layer.querySelector('.viz');
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = Math.round(c.clientWidth * dpr), h = Math.round(c.clientHeight * dpr);
+  if (!w || !h) return;
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  const g = c.getContext('2d');
+  const fresh = performance.now() - spectrum.at < 300;
+  const bands = fresh ? spectrum[k] : null;
+  const sm = smooth[k];
+  for (let i = 0; i < sm.length; i++) {
+    const target = bands ? bands[i] : 0;
+    sm[i] += (target - sm[i]) * (target > sm[i] ? 0.6 : 0.12);
+  }
+  const bass = (sm[1] + sm[2] + sm[3]) / 3;
+  const bg = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.7);
+  bg.addColorStop(0, `rgba(60,64,72,${0.35 + bass * 0.5})`);
+  bg.addColorStop(1, '#000');
+  g.fillStyle = bg;
+  g.fillRect(0, 0, w, h);
+  const n = sm.length, gap = w * 0.004, barW = (w / 2) / n - gap;
+  for (let i = 0; i < n; i++) {
+    const v = Math.pow(sm[i], 1.4);
+    const bh = Math.max(2 * dpr, v * h * 0.42);
+    const light = 70 + v * 30;
+    g.fillStyle = `hsl(220, 10%, ${light}%)`;
+    const xr = w / 2 + i * (barW + gap), xl = w / 2 - (i + 1) * (barW + gap);
+    for (const x of [xr, xl]) {
+      g.fillRect(x, h * 0.62 - bh, barW, bh);
+      g.globalAlpha = 0.18;
+      g.fillRect(x, h * 0.62 + 4 * dpr, barW, bh * 0.45);
+      g.globalAlpha = 1;
+    }
+  }
+}
+
+requestAnimationFrame(renderVfx);
